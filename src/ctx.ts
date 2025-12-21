@@ -1,7 +1,7 @@
 import { darkColors, lightColors } from "./colors.ts";
 import { THREE, type Sphere } from "./index.ts";
 import type { Line, Text } from "./shapeTypes.ts";
-import { toVec2, toVec3, vec3, type Vec2, type Vec3 } from "./utils.ts";
+import { toVec3, vec3, type Vec3 } from "./utils.ts";
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
 import DefaultFont from "../src/Google_Sans_Code_Regular.json" with { type: "json" };
 
@@ -38,7 +38,7 @@ export class Ctx {
 	 *
 	 * ctx.camera = new THREE.PerspectiveCamera(75, 16 / 9, 0.1, 1000);
 	 */
-	camera: THREE.Camera;
+	camera: THREE.OrthographicCamera;
 
 	/**
 	 * A reference to the THREE.js Scene instance.
@@ -75,20 +75,14 @@ export class Ctx {
      */
     private font: Font | null = null;
 
-	constructor(scene: THREE.Scene, size: Vec2) {
+	constructor(scene: THREE.Scene) {
 		this.sceneRef = scene;
 		this.updateFns = [];
 		this.garbage = [];
 
-		const [width = 512, height = 512] = toVec2(size);
-		this.camera = new THREE.OrthographicCamera(
-			width / -2,
-			width / 2,
-			height / 2,
-			height / -2,
-			-1000000,
-			1000000
-		);
+		this.camera = new THREE.OrthographicCamera();
+        this.camera.near = -1000000;
+        this.camera.far = 1000000;
 		this.camera.position.set(-1, 1, 1);
 		this.camera.lookAt(0, 0, 0);
 	}
@@ -396,6 +390,17 @@ export class Ctx {
 	 * @internal Checks if there are any registered update functions.
 	 */
 	__hasUpdateFns = () => this.updateFns.length > 0;
+
+    /**
+     * @internal Updates camera bounds given width and height of the renderer.
+     */
+    __setCameraBounds = (width: number, height: number) => {
+            this.camera.left = -width * 0.5;
+            this.camera.right = width * 0.5;
+            this.camera.top = height * 0.5;
+            this.camera.bottom = -height * 0.5;
+            this.camera.updateProjectionMatrix();
+    }
 
 	/**
 	 * Returns the absolute value of the near or far plane, whichever is larger. Used for setting range limits for
