@@ -1,6 +1,7 @@
+import { darkColors, lightColors } from "./colors.ts";
 import { THREE, type Sphere } from "./index.ts";
 import type { Line } from "./shapeTypes.ts";
-import { color, toVec2, toVec3, vec3, type Vec2, type Vec3 } from "./utils.ts";
+import { toVec2, toVec3, vec3, type Vec2, type Vec3 } from "./utils.ts";
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
 
@@ -123,26 +124,7 @@ export class Ctx {
 	 * A collection of commonly used colors based on the current theme.
 	 */
 	get COLORS() {
-		// The reason why we're using getters here is to ensure that the returned colors are new instances each time
-		// they are accessed. Returning a static color causes issues, for example when trying to lerp between colors 🤷
-		if (this.theme === "light") {
-			return {
-				get FOREGROUND() {
-					return color("#0a0a0a");
-				},
-				get BACKGROUND() {
-					return color("#ffffff");
-				},
-			};
-		}
-		return {
-			get FOREGROUND() {
-				return color("#ffffff");
-			},
-			get BACKGROUND() {
-				return color("#0a0a0a");
-			},
-		};
+		return this.theme === "light" ? lightColors : darkColors;
 	}
 
 	/**
@@ -293,6 +275,42 @@ export class Ctx {
 		}
 
 		return this.lineStrip(points, style);
+	};
+
+	/**
+	 * Creates and adds a grid helper to the scene.
+	 * @param size The size of the grid.
+	 * @param spacing The spacing between grid lines. Defaults to 50 units.
+	 * @param color The color of the grid lines. Defaults to the context's secondary color.
+	 * @param normal The normal vector defining the orientation of the grid. Defaults to (0, 1, 0).
+	 * @returns The created THREE.GridHelper instance.
+	 * @example
+	 * ctx.grid(); // Default grid
+	 * ctx.grid(500, 25); // Grid of size 500 with 25 unit spacing
+	 * ctx.grid(400, 20, "gray", [0, 0, 1]); // Grid with normal along Z axis
+	 */
+	grid = (
+		size?: number | null,
+		spacing?: number | null,
+		color?: THREE.ColorRepresentation | null,
+		normal?: Vec3
+	) => {
+		const gridSize = size ?? this.getCameraExtent();
+		const divisions = gridSize / (spacing ?? 50);
+
+		const gridHelper = new THREE.GridHelper(
+			gridSize,
+			divisions,
+			color ?? this.COLORS.SECONDARY,
+			color ?? this.COLORS.SECONDARY
+		);
+
+		const rotation = new THREE.Quaternion();
+		rotation.setFromUnitVectors(vec3(0, 1, 0), toVec3(normal ?? [0, 1, 0]));
+		gridHelper.quaternion.copy(rotation);
+
+		this.spawn(gridHelper);
+		return gridHelper;
 	};
 
 	/**
