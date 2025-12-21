@@ -165,6 +165,11 @@ export class Ctx {
 	}
 
 	/**
+	 * @internal Checks if there are any registered update functions.
+	 */
+	__hasUpdateFns = () => this.updateFns.length > 0;
+
+	/**
 	 * Cleans up objects marked for removal in IMMEDIATE mode.
 	 */
 	private clearGarbage() {

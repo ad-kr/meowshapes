@@ -22,6 +22,8 @@ export class Renderer {
 		this.inner.setSize(width, height);
 		this.inner.render(scene, ctx.camera);
 
+		if (!ctx.__hasUpdateFns()) return;
+
 		let lastMs: number | null = null;
 		let elapsedSecs = 0;
 
