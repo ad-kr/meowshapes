@@ -1,7 +1,25 @@
 import { THREE, type Sphere } from "./index.ts";
+import type { Line } from "./shapeTypes.ts";
 import { color, toVec2, toVec3, type Vec2, type Vec3 } from "./utils.ts";
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
+
+type LineStyle =
+	| "dashed"
+	| THREE.ColorRepresentation
+	| {
+			color?: THREE.ColorRepresentation;
+			dashSize?: number;
+			gapSize?: number;
+	  };
+
+const toLineStyle = (style: LineStyle) => {
+	if (style === "dashed") return { dashSize: 20, gapSize: 10 };
+	if (typeof style === "object" && !(style instanceof THREE.Color)) {
+		return style;
+	}
+	return { color: style };
+};
 
 export class Ctx {
 	/**
@@ -123,6 +141,49 @@ export class Ctx {
 			},
 		};
 	}
+
+	/**
+	 * Creates and adds a line to the scene.
+	 * @param start A vector representing the start point of the line.
+	 * @param end A vector representing the end point of the line.
+	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize and gapSize. Defaults to the context's foreground color.
+	 * @returns The created THREE.Line instance. For convenience, this is typed as {@link Line}.
+	 * @example
+	 * ctx.line([0, 0, 0], [10, 10, 10]); // Uses default foreground color
+	 * ctx.line(vec3(0, 0, 0), vec3(10, 0, 0), "dashed");
+	 * ctx.line([0, 0, 0], [0, 10, 0], { color: "red", dashSize: 5, gapSize: 2 });
+	 */
+	line = (start: Vec3, end: Vec3, style?: LineStyle): Line => {
+		return this.lineStrip([start, end], style);
+	};
+
+	/**
+	 * Creates and adds a line strip to the scene.
+	 * @param points An array of vectors representing the points of the line strip.
+	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize and gapSize. Defaults to the context's foreground color.
+	 * @returns The created THREE.Line instance. For convenience, this is typed as {@link Line}.
+	 * @example
+	 * ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]]); // Uses default foreground color
+	 * ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]], "dashed");
+	 * ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]], { color: "blue", dashSize: 3, gapSize: 1 });
+	 */
+	lineStrip = (points: Vec3[], style?: LineStyle): Line => {
+		const vecPoints = points.map(toVec3);
+
+		const geometry = new THREE.BufferGeometry().setFromPoints(vecPoints);
+
+		const lineStyle = toLineStyle(style ?? this.COLORS.FOREGROUND);
+		const material = new THREE.LineDashedMaterial({
+			color: lineStyle.color ?? this.COLORS.FOREGROUND,
+			dashSize: lineStyle.dashSize ?? 0,
+			gapSize: lineStyle.gapSize ?? 0,
+		});
+
+		const line = new THREE.Line(geometry, material);
+		line.computeLineDistances();
+		this.spawn(line);
+		return line;
+	};
 
 	/**
 	 * Creates and adds a sphere to the scene.
