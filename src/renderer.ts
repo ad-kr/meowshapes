@@ -14,7 +14,7 @@ export class Renderer {
 		const scene = new THREE.Scene();
 		const ctx = new Ctx(scene, [width, height]);
 
-		scene.background = ctx.COLORS.BACKGROUND;
+		scene.background = ctx.COLOR.BACKGROUND;
 
 		setup(ctx);
 
