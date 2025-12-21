@@ -123,7 +123,7 @@ export class Ctx {
 	/**
 	 * A collection of commonly used colors based on the current theme.
 	 */
-	get COLORS() {
+	get COLOR() {
 		return this.theme === "light" ? lightColors : darkColors;
 	}
 
@@ -159,7 +159,7 @@ export class Ctx {
 
 		const lineStyle = toLineStyle(style);
 		const material = new THREE.LineDashedMaterial({
-			color: lineStyle.color ?? this.COLORS.FOREGROUND,
+			color: lineStyle.color ?? this.COLOR.FOREGROUND,
 			dashSize: lineStyle.dashSize ?? 0,
 			gapSize: lineStyle.gapSize ?? 0,
 		});
@@ -192,7 +192,7 @@ export class Ctx {
 			direction,
 			startVec,
 			length,
-			color ?? this.COLORS.FOREGROUND,
+			color ?? this.COLOR.FOREGROUND,
 			12,
 			12
 		);
@@ -232,7 +232,7 @@ export class Ctx {
 		const pos = toVec3(position);
 		const geometry = new THREE.SphereGeometry(radius);
 		const material = new THREE.MeshBasicMaterial({
-			color: color ?? this.COLORS.FOREGROUND,
+			color: color ?? this.COLOR.FOREGROUND,
 		});
 		const mesh = new THREE.Mesh(geometry, material);
 		mesh.position.copy(pos);
@@ -301,8 +301,8 @@ export class Ctx {
 		const gridHelper = new THREE.GridHelper(
 			gridSize,
 			divisions,
-			color ?? this.COLORS.SECONDARY,
-			color ?? this.COLORS.SECONDARY
+			color ?? this.COLOR.SECONDARY,
+			color ?? this.COLOR.SECONDARY
 		);
 
 		const rotation = new THREE.Quaternion();
