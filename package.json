@@ -1,0 +1,21 @@
+{
+    "name": "vectors",
+    "version": "1.0.0",
+    "description": "",
+    "license": "ISC",
+    "author": "",
+    "type": "module",
+    "main": "src/index.ts",
+    "dependencies": {
+        "three": "^0.182.0",
+        "typescript": "^5.9.3"
+    },
+    "exports": {
+        ".": {
+            "import": "./src/index.ts"
+        }
+    },
+    "devDependencies": {
+        "@types/three": "^0.182.0"
+    }
+}
