@@ -51,3 +51,25 @@ export const toVec4 = (v: Vec4) => {
 	const v3 = toVec3(v as Vec3);
 	return new THREE.Vector4(v3.x, v3.y, v3.z, 0);
 };
+
+/** Common direction vectors. */
+export const DIR = {
+	get Y() {
+		return vec3(0, 1, 0);
+	},
+	get NEG_Y() {
+		return vec3(0, -1, 0);
+	},
+	get X() {
+		return vec3(1, 0, 0);
+	},
+	get NEG_X() {
+		return vec3(-1, 0, 0);
+	},
+	get Z() {
+		return vec3(0, 0, 1);
+	},
+	get NEG_Z() {
+		return vec3(0, 0, -1);
+	},
+};
