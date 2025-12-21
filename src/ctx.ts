@@ -3,6 +3,7 @@ import { THREE, type Sphere } from "./index.ts";
 import type { Line, Text } from "./shapeTypes.ts";
 import { toVec3, vec3, type Vec3 } from "./utils.ts";
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
+import { Points } from "./points.ts";
 import DefaultFont from "../src/Google_Sans_Code_Regular.json" with { type: "json" };
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
@@ -379,6 +380,38 @@ export class Ctx {
 
 		this.spawn(gridHelper);
 		return gridHelper;
+	};
+
+	/**
+	 * An efficient way to render large point clouds.
+	 * @param points Array of point positions.
+	 * @param size Size of the points. Defaults to 2. All points are squares facing the camera.
+	 * @param color Color of the points. Defaults to the context's foreground color.
+	 * @returns Points helper object.
+	 * @example
+	 * const pts = new Array(1000).fill(vec3(0, 0, 0));
+	 * const points = ctx.points(pts, 3, "red");
+	 *
+	 * const point = points.getPosition(0); // Get position of first point
+	 * points.setPosition(0, vec3(10, 10, 10)); // Move first point
+	 *
+	 * console.log(`Point count: ${points.count}`);
+	 *
+	 * const color = points.getColor(0); // Get color of first point
+	 * points.setColor(0, "blue");
+	 */
+	points = (
+		points: Vec3[],
+		size?: number | null,
+		color?: THREE.ColorRepresentation
+	): Points => {
+		const pointCloud = new Points(
+			points,
+			size ?? 2,
+			new THREE.Color(color ?? this.COLOR.FOREGROUND)
+		);
+		this.spawn(pointCloud.innerPoints);
+		return pointCloud;
 	};
 
 	/**

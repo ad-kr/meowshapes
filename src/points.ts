@@ -1,0 +1,98 @@
+import { THREE } from "./index.ts";
+import { color as col, toVec3, vec3, type Vec3 } from "./utils.ts";
+
+/**
+ * Helper class for working with point clouds.
+ */
+export class Points {
+	/**
+	 * The inner THREE.Points object.
+	 */
+	innerPoints: THREE.Points<
+		THREE.BufferGeometry<
+			THREE.NormalBufferAttributes,
+			THREE.BufferGeometryEventMap
+		>,
+		THREE.PointsMaterial,
+		THREE.Object3DEventMap
+	>;
+
+	constructor(points: Vec3[], size: number, color: THREE.Color) {
+		const vecPoints = points.map(toVec3);
+
+		const geometry = new THREE.BufferGeometry().setFromPoints(vecPoints);
+		const colors = new Float32Array(vecPoints.length * 3);
+
+		for (let i = 0; i < vecPoints.length; i++) {
+			colors[i * 3] = color.r;
+			colors[i * 3 + 1] = color.g;
+			colors[i * 3 + 2] = color.b;
+		}
+
+		geometry.setAttribute(
+			"color",
+			new THREE.Float32BufferAttribute(colors, 3)
+		);
+
+		const material = new THREE.PointsMaterial({ vertexColors: true, size });
+		this.innerPoints = new THREE.Points(geometry, material);
+	}
+
+	/**
+	 * Gets the number of points in the point cloud.
+	 * @returns Number of points.
+	 */
+	get count() {
+		return this.innerPoints.geometry.getAttribute("position").count;
+	}
+
+	/**
+	 * Gets the position of a specific point.
+	 * @param index Index of the point to get the position for.
+	 * @returns Position of the specified point.
+	 */
+	getPosition(index: number) {
+		const attr = this.innerPoints.geometry.getAttribute("position");
+		const x = attr.getX(index);
+		const y = attr.getY(index);
+		const z = attr.getZ(index);
+		return vec3(x, y, z);
+	}
+
+	/**
+	 * Sets the position of a specific point.
+	 * @param index Index of the point to set the position for.
+	 * @param position New position for the point.
+	 */
+	setPosition(index: number, position: Vec3) {
+		const pos = toVec3(position);
+		const attr = this.innerPoints.geometry.getAttribute("position");
+		attr.setXYZ(index, pos.x, pos.y, pos.z);
+		attr.needsUpdate = true;
+	}
+
+	/**
+	 * Gets the color of a specific point.
+	 * @param index Index of the point to get the color for.
+	 * @returns Color of the specified point.
+	 */
+	getColor(index: number) {
+		const attr = this.innerPoints.geometry.getAttribute("color");
+		const r = attr.getX(index);
+		const g = attr.getY(index);
+		const b = attr.getZ(index);
+		return new THREE.Color(r, g, b);
+	}
+
+	/**
+	 * Sets the color of a specific point.
+	 * @param index Index of the point to set the color for.
+	 * @param color New color for the point.
+	 */
+	setColor(index: number, color: THREE.ColorRepresentation) {
+		const c = col(color);
+		const attr = this.innerPoints.geometry.getAttribute("color");
+		attr.setXYZ(index, c.r, c.g, c.b);
+		attr.needsUpdate = true;
+	}
+}
