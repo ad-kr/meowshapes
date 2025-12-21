@@ -13,6 +13,14 @@ export const lightColors = {
 	get BACKGROUND() {
 		return color("#ffffff");
 	},
+	/**
+	 * Interpolation between FOREGROUND and BACKGROUND colors given a factor between 0 and 1.
+	 * @param factor A number between 0 and 1 representing the interpolation factor, where 0 returns BACKGROUND and 1 returns FOREGROUND.
+	 * @returns A THREE.Color instance representing the interpolated color.
+	 */
+	gray(factor: number) {
+		return this.BACKGROUND.lerp(this.FOREGROUND, factor);
+	},
 };
 
 export const darkColors = {
@@ -25,4 +33,5 @@ export const darkColors = {
 	get BACKGROUND() {
 		return color("#0a0a0a");
 	},
+	gray: lightColors.gray,
 };
