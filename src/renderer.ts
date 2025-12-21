@@ -8,36 +8,23 @@ export class Renderer {
 	constructor(setup: (ctx: Ctx) => void) {
 		this.inner = new THREE.WebGLRenderer({ antialias: true });
 
+		const width = window.innerWidth;
+		const height = window.innerHeight;
+
 		const scene = new THREE.Scene();
-		const ctx = new Ctx(scene);
+		const ctx = new Ctx(scene, [width, height]);
 
 		scene.background = ctx.COLORS.BACKGROUND;
 
 		setup(ctx);
 
-		const width = window.innerWidth;
-		const height = window.innerHeight;
-
-		const camera = new THREE.OrthographicCamera(
-			-width / 2,
-			width / 2,
-			height / 2,
-			-height / 2,
-			-1000000,
-			1000000
-		);
-
-		camera.position.x = -100;
-		camera.position.y = 100;
-		camera.position.z = 100;
-		camera.lookAt(0, 0, 0);
-
 		this.inner.setPixelRatio(window.devicePixelRatio);
 		this.inner.setSize(width, height);
-		this.inner.render(scene, camera);
+		this.inner.render(scene, ctx.camera);
 
 		let lastMs: number | null = null;
 		let elapsedSecs = 0;
+
 		this.inner.setAnimationLoop((elapsedMs) => {
 			let deltaSecs = 0;
 			if (lastMs !== null) {
@@ -47,7 +34,7 @@ export class Renderer {
 			lastMs = elapsedMs;
 
 			ctx.__tick(deltaSecs, elapsedSecs);
-			this.inner.render(scene, camera);
+			this.inner.render(scene, ctx.camera);
 		});
 	}
 

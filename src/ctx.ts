@@ -1,11 +1,25 @@
 import { THREE, type Sphere } from "./index.ts";
-import { color, toVec3, type Vec3 } from "./utils.ts";
+import { color, toVec2, toVec3, type Vec2, type Vec3 } from "./utils.ts";
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
 
 export class Ctx {
-	/** The inner THREE.js Scene instance.*/
-	private readonly scene: THREE.Scene;
+	/**
+	 * The active camera used for rendering the scene. Modify or override it to change the view.
+	 *
+	 * Defaults to an orthographic camera positioned at (-1, 1, 1) looking at the origin.
+	 * @example
+	 * ctx.camera.position.set(10, 10, 10);
+	 * ctx.camera.lookAt(0, 0, 0);
+	 *
+	 * ctx.camera = new THREE.PerspectiveCamera(75, 16 / 9, 0.1, 1000);
+	 */
+	camera: THREE.Camera;
+
+	/**
+	 * A reference to the THREE.js Scene instance.
+	 */
+	private readonly sceneRef: THREE.Scene;
 
 	/**
 	 * The current rendering mode.
@@ -32,10 +46,22 @@ export class Ctx {
 	 */
 	private theme: "light" | "dark" = "light";
 
-	constructor(scene: THREE.Scene) {
-		this.scene = scene;
+	constructor(scene: THREE.Scene, size: Vec2) {
+		this.sceneRef = scene;
 		this.updateFns = [];
 		this.garbage = [];
+
+		const [width = 512, height = 512] = toVec2(size);
+		this.camera = new THREE.OrthographicCamera(
+			width / -2,
+			width / 2,
+			height / 2,
+			height / -2,
+			-1000000,
+			1000000
+		);
+		this.camera.position.set(-1, 1, 1);
+		this.camera.lookAt(0, 0, 0);
 	}
 
 	/**
@@ -47,8 +73,8 @@ export class Ctx {
 	 * ctx.background(0xff0000);
 	 */
 	background = (color: THREE.ColorRepresentation) => {
-		this.scene.background = new THREE.Color(color);
-		this.scene.add;
+		this.sceneRef.background = new THREE.Color(color);
+		this.sceneRef.add;
 	};
 
 	/**
@@ -143,7 +169,7 @@ export class Ctx {
 	 */
 	private clearGarbage() {
 		for (const object of this.garbage) {
-			this.scene.remove(object);
+			this.sceneRef.remove(object);
 		}
 		this.garbage = [];
 	}
@@ -153,7 +179,7 @@ export class Ctx {
 	 * @param object A Three.js object
 	 */
 	private spawn(object: THREE.Object3D) {
-		this.scene.add(object);
+		this.sceneRef.add(object);
 
 		if (this.mode === "IMMEDIATE") {
 			this.garbage.push(object);
