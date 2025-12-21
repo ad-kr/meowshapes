@@ -26,13 +26,15 @@ export class Renderer {
 		const resizeObserver = new ResizeObserver(() => {
 			const width = this.wrapper.clientWidth;
 			const height = this.wrapper.clientHeight;
-			this.inner.setSize(width, height);
+
 			ctx.__setCameraBounds(width, height);
+
+			this.inner.setSize(width, height);
+			this.inner.render(scene, ctx.camera);
 		});
 		resizeObserver.observe(this.wrapper);
 
 		this.inner.setPixelRatio(window.devicePixelRatio);
-		this.inner.render(scene, ctx.camera);
 
 		if (!ctx.__hasUpdateFns()) return;
 
