@@ -70,10 +70,10 @@ export class Ctx {
 	 */
 	private theme: "light" | "dark" = "light";
 
-    /**
-     * The font used for rendering text. Loaded on demand.
-     */
-    private font: Font | null = null;
+	/**
+	 * The font used for rendering text. Loaded on demand.
+	 */
+	private font: Font | null = null;
 
 	constructor(scene: THREE.Scene) {
 		this.sceneRef = scene;
@@ -81,8 +81,8 @@ export class Ctx {
 		this.garbage = [];
 
 		this.camera = new THREE.OrthographicCamera();
-        this.camera.near = -1000000;
-        this.camera.far = 1000000;
+		this.camera.near = -1000000;
+		this.camera.far = 1000000;
 		this.camera.position.set(-1, 1, 1);
 		this.camera.lookAt(0, 0, 0);
 	}
@@ -127,31 +127,35 @@ export class Ctx {
 	get COLOR() {
 		return this.theme === "light" ? lightColors : darkColors;
 	}
-    
-    /**
-     * Creates and adds 3D text to the scene.
-     * @param value The text string to be rendered.
-     * @param size The size of the text. If null, defaults to 16.
-     * @param direction (Optional) The direction of the text. Can be "ltr" (left-to-right), "rtl" (right-to-left), or "tb" (top-to-bottom).
-     * @returns The created THREE.Mesh instance representing the text. For convenience, this is typed as {@link Text}.
-     * @example
-     * ctx.text("Hello, World!", 24);
-     */
-	text = (value: string, size?: number | null, direction?: "ltr" | "rtl" | "tb"): Text => {
+
+	/**
+	 * Creates and adds 3D text to the scene.
+	 * @param value The text string to be rendered.
+	 * @param size The size of the text. If null, defaults to 16.
+	 * @param direction (Optional) The direction of the text. Can be "ltr" (left-to-right), "rtl" (right-to-left), or "tb" (top-to-bottom).
+	 * @returns The created THREE.Mesh instance representing the text. For convenience, this is typed as {@link Text}.
+	 * @example
+	 * ctx.text("Hello, World!", 24);
+	 */
+	text = (
+		value: string,
+		size?: number | null,
+		direction?: "ltr" | "rtl" | "tb"
+	): Text => {
 		if (this.font === null) {
 			const loader = new FontLoader();
-            this.font = loader.parse(DefaultFont as any);
-            return this.text(value, size, direction);
+			this.font = loader.parse(DefaultFont as any);
+			return this.text(value, size, direction);
 		}
 
 		const shapes = this.font.generateShapes(value, size ?? 16, direction);
 		const geometry = new THREE.ShapeGeometry(shapes);
 		geometry.computeBoundingBox();
-        geometry.translate(
-            - (geometry.boundingBox!.max.x - geometry.boundingBox!.min.x) * 0.5,
-            - (geometry.boundingBox!.max.y - geometry.boundingBox!.min.y) * 0.5,
-            0
-        );
+		geometry.translate(
+			-(geometry.boundingBox!.max.x - geometry.boundingBox!.min.x) * 0.5,
+			-(geometry.boundingBox!.max.y - geometry.boundingBox!.min.y) * 0.5,
+			0
+		);
 		const material = new THREE.MeshBasicMaterial({
 			color: this.COLOR.FOREGROUND,
 			side: THREE.DoubleSide,
@@ -161,31 +165,35 @@ export class Ctx {
 		return text;
 	};
 
-    /**
-     * A billboarding version of {@link text}, which always faces the camera.
-     * @param value The text string to be rendered.
-     * @param size The size of the text. If null, defaults to 16.
-     * @param direction (Optional) The direction of the text. Can be "ltr" (left-to-right), "rtl" (right-to-left), or "tb" (top-to-bottom).
-     * @returns The created THREE.Mesh instance representing the billboarding text. For convenience, this is typed as {@link Text}.
-     * @example
-     * ctx.textBillboard("Hello, World!", 24);
-     */
-    textBillboard = (value: string, size?: number | null, direction?: "ltr" | "rtl" | "tb") => {
-        const textMesh = this.text(value, size, direction);
-        
-        const rotate = () => {
-            const cameraRotation = this.camera.quaternion.clone();
-            textMesh.quaternion.copy(cameraRotation);
-        }
+	/**
+	 * A billboarding version of {@link text}, which always faces the camera.
+	 * @param value The text string to be rendered.
+	 * @param size The size of the text. If null, defaults to 16.
+	 * @param direction (Optional) The direction of the text. Can be "ltr" (left-to-right), "rtl" (right-to-left), or "tb" (top-to-bottom).
+	 * @returns The created THREE.Mesh instance representing the billboarding text. For convenience, this is typed as {@link Text}.
+	 * @example
+	 * ctx.textBillboard("Hello, World!", 24);
+	 */
+	textBillboard = (
+		value: string,
+		size?: number | null,
+		direction?: "ltr" | "rtl" | "tb"
+	) => {
+		const textMesh = this.text(value, size, direction);
 
-        if (this.mode !== "IMMEDIATE") {
-            this.update(rotate)
-        } else {
-            rotate()
-        }
+		const rotate = () => {
+			const cameraRotation = this.camera.quaternion.clone();
+			textMesh.quaternion.copy(cameraRotation);
+		};
 
-        return textMesh;
-    }
+		if (this.mode !== "IMMEDIATE") {
+			this.update(rotate);
+		} else {
+			rotate();
+		}
+
+		return textMesh;
+	};
 
 	/**
 	 * Creates and adds a line to the scene.
@@ -391,16 +399,16 @@ export class Ctx {
 	 */
 	__hasUpdateFns = () => this.updateFns.length > 0;
 
-    /**
-     * @internal Updates camera bounds given width and height of the renderer.
-     */
-    __setCameraBounds = (width: number, height: number) => {
-            this.camera.left = -width * 0.5;
-            this.camera.right = width * 0.5;
-            this.camera.top = height * 0.5;
-            this.camera.bottom = -height * 0.5;
-            this.camera.updateProjectionMatrix();
-    }
+	/**
+	 * @internal Updates camera bounds given width and height of the renderer.
+	 */
+	__setCameraBounds = (width: number, height: number) => {
+		this.camera.left = -width * 0.5;
+		this.camera.right = width * 0.5;
+		this.camera.top = height * 0.5;
+		this.camera.bottom = -height * 0.5;
+		this.camera.updateProjectionMatrix();
+	};
 
 	/**
 	 * Returns the absolute value of the near or far plane, whichever is larger. Used for setting range limits for
