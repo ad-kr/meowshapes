@@ -5,6 +5,8 @@ import { color, toVec2, toVec3, vec3, type Vec2, type Vec3 } from "./utils.ts";
 export type UpdateFn = (dt: number, elapsed: number) => void;
 
 type LineStyle =
+	| null
+	| undefined
 	| "dashed"
 	| THREE.ColorRepresentation
 	| {
@@ -14,6 +16,7 @@ type LineStyle =
 	  };
 
 const toLineStyle = (style: LineStyle) => {
+	if (style === null || style === undefined) return {};
 	if (style === "dashed") return { dashSize: 20, gapSize: 10 };
 	if (typeof style === "object" && !(style instanceof THREE.Color)) {
 		return style;
@@ -172,7 +175,7 @@ export class Ctx {
 
 		const geometry = new THREE.BufferGeometry().setFromPoints(vecPoints);
 
-		const lineStyle = toLineStyle(style ?? this.COLORS.FOREGROUND);
+		const lineStyle = toLineStyle(style);
 		const material = new THREE.LineDashedMaterial({
 			color: lineStyle.color ?? this.COLORS.FOREGROUND,
 			dashSize: lineStyle.dashSize ?? 0,
@@ -257,6 +260,42 @@ export class Ctx {
 	};
 
 	/**
+	 * Creates and adds a graph of a mathematical function to the scene.
+	 * @param func The mathematical function to graph.
+	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize and gapSize. Defaults to the context's foreground color.
+	 * @param range (Optional) The range [from, to] over which to graph the function.
+	 * @returns The created THREE.Line instance representing the graph. For convenience, this is typed as {@link Line}.
+	 * @example
+	 * // Graph a sine wave from -10 to 10
+	 * ctx.graph(x => Math.sin(x), "dashed", [-10, 10]);
+	 * // Graph a quadratic function over the default range
+	 * ctx.graph(x => x * x, { color: "blue", dashSize: 5, gapSize: 2 });
+	 */
+	graph = (
+		func: (x: number) => number,
+		style?: LineStyle,
+		range?: [number, number]
+	) => {
+		const cameraExtent = this.getCameraExtent();
+		const from = range?.[0] ?? -cameraExtent;
+		const to = range?.[1] ?? cameraExtent;
+
+		if (from >= to) {
+			throw new Error("Invalid range: 'to' must be greater than 'from'");
+		}
+
+		const pointCount = Math.round((to - from) * 0.5);
+		const points: Vec3[] = [];
+		for (let i = 0; i <= pointCount; i++) {
+			const x = from + (i / pointCount) * (to - from);
+			const y = func(x);
+			points.push([x, y, 0]);
+		}
+
+		return this.lineStrip(points, style);
+	};
+
+	/**
 	 * Advances the update functions by one tick. This is called internally by the Renderer on each animation frame.
 	 * When a tick occurs, the context enters "immediate mode". See {@link mode} for more details.
 	 * @internal Do not call this method directly. The Renderer handles this internally.
@@ -273,6 +312,22 @@ export class Ctx {
 	 * @internal Checks if there are any registered update functions.
 	 */
 	__hasUpdateFns = () => this.updateFns.length > 0;
+
+	/**
+	 * Returns the absolute value of the near or far plane, whichever is larger. Used for setting range limits for
+	 * graphs and similar objects. (Not and ideal solution, but works for now.)
+	 */
+	private getCameraExtent() {
+		if (
+			this.camera instanceof THREE.PerspectiveCamera ||
+			this.camera instanceof THREE.OrthographicCamera
+		) {
+			const near = Math.abs(this.camera.near);
+			const far = Math.abs(this.camera.far);
+			return Math.max(near, far);
+		}
+		return 10000;
+	}
 
 	/**
 	 * Cleans up objects marked for removal in IMMEDIATE mode.
