@@ -1,6 +1,6 @@
 import { THREE, type Sphere } from "./index.ts";
 import type { Line } from "./shapeTypes.ts";
-import { color, toVec2, toVec3, type Vec2, type Vec3 } from "./utils.ts";
+import { color, toVec2, toVec3, vec3, type Vec2, type Vec3 } from "./utils.ts";
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
 
@@ -183,6 +183,50 @@ export class Ctx {
 		line.computeLineDistances();
 		this.spawn(line);
 		return line;
+	};
+
+	/**
+	 * Creates and adds an arrow to the scene.
+	 * @param start The start point of the arrow.
+	 * @param end The end point of the arrow.
+	 * @param color The color of the arrow.
+	 * @returns The created THREE.ArrowHelper instance.
+	 * @example
+	 * ctx.arrow([0, 0, 0], [10, 10, 10]); // Uses default foreground color
+	 * ctx.arrow([0, 0, 0], [10, 0, 0], "red");
+	 */
+	arrow = (start: Vec3, end: Vec3, color?: THREE.ColorRepresentation) => {
+		const startVec = toVec3(start);
+		const endVec = toVec3(end);
+
+		const line = endVec.clone().sub(startVec);
+		const length = line.length();
+		const direction = line.clone().normalize();
+
+		const arrowHelper = new THREE.ArrowHelper(
+			direction,
+			startVec,
+			length,
+			color ?? this.COLORS.FOREGROUND,
+			12,
+			12
+		);
+
+		this.spawn(arrowHelper);
+		return arrowHelper;
+	};
+
+	/**
+	 * Creates an arrow starting from the origin (0, 0, 0) to the given vector.
+	 * @param vec The vector to be drawn.
+	 * @param color The color of the arrow.
+	 * @returns The created THREE.ArrowHelper instance.
+	 * @example
+	 * ctx.vector([10, 10, 10]); // Uses default foreground color
+	 * ctx.vector(vec3(10, 0, 0), "blue");
+	 */
+	vector = (vec: Vec3, color?: THREE.ColorRepresentation) => {
+		return this.arrow(vec3(0, 0, 0), vec, color);
 	};
 
 	/**
