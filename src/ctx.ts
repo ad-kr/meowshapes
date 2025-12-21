@@ -1,7 +1,9 @@
 import { darkColors, lightColors } from "./colors.ts";
 import { THREE, type Sphere } from "./index.ts";
-import type { Line } from "./shapeTypes.ts";
+import type { Line, Text } from "./shapeTypes.ts";
 import { toVec2, toVec3, vec3, type Vec2, type Vec3 } from "./utils.ts";
+import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
+import DefaultFont from "../src/Google_Sans_Code_Regular.json" with { type: "json" };
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
 
@@ -68,6 +70,11 @@ export class Ctx {
 	 */
 	private theme: "light" | "dark" = "light";
 
+    /**
+     * The font used for rendering text. Loaded on demand.
+     */
+    private font: Font | null = null;
+
 	constructor(scene: THREE.Scene, size: Vec2) {
 		this.sceneRef = scene;
 		this.updateFns = [];
@@ -126,6 +133,65 @@ export class Ctx {
 	get COLOR() {
 		return this.theme === "light" ? lightColors : darkColors;
 	}
+    
+    /**
+     * Creates and adds 3D text to the scene.
+     * @param value The text string to be rendered.
+     * @param size The size of the text. If null, defaults to 16.
+     * @param direction (Optional) The direction of the text. Can be "ltr" (left-to-right), "rtl" (right-to-left), or "tb" (top-to-bottom).
+     * @returns The created THREE.Mesh instance representing the text. For convenience, this is typed as {@link Text}.
+     * @example
+     * ctx.text("Hello, World!", 24);
+     */
+	text = (value: string, size?: number | null, direction?: "ltr" | "rtl" | "tb"): Text => {
+		if (this.font === null) {
+			const loader = new FontLoader();
+            this.font = loader.parse(DefaultFont as any);
+            return this.text(value, size, direction);
+		}
+
+		const shapes = this.font.generateShapes(value, size ?? 16, direction);
+		const geometry = new THREE.ShapeGeometry(shapes);
+		geometry.computeBoundingBox();
+        geometry.translate(
+            - (geometry.boundingBox!.max.x - geometry.boundingBox!.min.x) * 0.5,
+            - (geometry.boundingBox!.max.y - geometry.boundingBox!.min.y) * 0.5,
+            0
+        );
+		const material = new THREE.MeshBasicMaterial({
+			color: this.COLOR.FOREGROUND,
+			side: THREE.DoubleSide,
+		});
+		const text = new THREE.Mesh(geometry, material);
+		this.spawn(text);
+		return text;
+	};
+
+    /**
+     * A billboarding version of {@link text}, which always faces the camera.
+     * @param value The text string to be rendered.
+     * @param size The size of the text. If null, defaults to 16.
+     * @param direction (Optional) The direction of the text. Can be "ltr" (left-to-right), "rtl" (right-to-left), or "tb" (top-to-bottom).
+     * @returns The created THREE.Mesh instance representing the billboarding text. For convenience, this is typed as {@link Text}.
+     * @example
+     * ctx.textBillboard("Hello, World!", 24);
+     */
+    textBillboard = (value: string, size?: number | null, direction?: "ltr" | "rtl" | "tb") => {
+        const textMesh = this.text(value, size, direction);
+        
+        const rotate = () => {
+            const cameraRotation = this.camera.quaternion.clone();
+            textMesh.quaternion.copy(cameraRotation);
+        }
+
+        if (this.mode !== "IMMEDIATE") {
+            this.update(rotate)
+        } else {
+            rotate()
+        }
+
+        return textMesh;
+    }
 
 	/**
 	 * Creates and adds a line to the scene.
