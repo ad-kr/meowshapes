@@ -8,6 +8,9 @@ export class Renderer {
 	/** The wrapper div containing the renderer's DOM element. */
 	private readonly wrapper: HTMLDivElement;
 
+	/** The ResizeObserver to handle resizing of the renderer. */
+	private readonly resizeObserver: ResizeObserver;
+
 	constructor(setup: (ctx: Ctx) => void) {
 		this.inner = new THREE.WebGLRenderer({ antialias: true });
 
@@ -23,7 +26,7 @@ export class Renderer {
 
 		setup(ctx);
 
-		const resizeObserver = new ResizeObserver(() => {
+		this.resizeObserver = new ResizeObserver(() => {
 			const width = this.wrapper.clientWidth;
 			const height = this.wrapper.clientHeight;
 
@@ -32,7 +35,7 @@ export class Renderer {
 			this.inner.setSize(width, height);
 			this.inner.render(scene, ctx.camera);
 		});
-		resizeObserver.observe(this.wrapper);
+		this.resizeObserver.observe(this.wrapper);
 
 		this.inner.setPixelRatio(window.devicePixelRatio);
 
@@ -62,4 +65,20 @@ export class Renderer {
 	 * document.body.appendChild(renderer.element());
 	 */
 	element = () => this.wrapper;
+
+	/**
+	 * Disposes of the renderer and its resources. After calling this method, the renderer should not be used
+	 * anymore. Also removes the renderer's DOM element from the document if it was added.
+	 */
+	dispose() {
+		// this.inner.dispose() alone does not free up WebGL contexts, so we force a context loss first.
+		this.inner.forceContextLoss();
+
+		this.inner.dispose();
+		this.resizeObserver.disconnect();
+
+		if (this.wrapper.parentElement) {
+			this.wrapper.parentElement.removeChild(this.wrapper);
+		}
+	}
 }
