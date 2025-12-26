@@ -4,7 +4,7 @@ import type { Line, Text } from "./shapeTypes.ts";
 import { toVec3, vec3, type Vec3 } from "./utils.ts";
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
 import { Points } from "./points.ts";
-import DefaultFont from "../src/Google_Sans_Code_Regular.json" with { type: "json" };
+import { defaultFont } from "./defaultFont.ts";
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
 
@@ -145,7 +145,7 @@ export class Ctx {
 	): Text => {
 		if (this.font === null) {
 			const loader = new FontLoader();
-			this.font = loader.parse(DefaultFont as any);
+			this.font = loader.parse(defaultFont);
 			return this.text(value, size, direction);
 		}
 
