@@ -10,7 +10,7 @@ export {
 	type Vec3,
 	type Vec4,
 } from "./utils.ts";
-export type { Sphere, Line, Text } from "./shapeTypes.ts";
+export type { Sphere, Text } from "./shapeTypes.ts";
 
 // TODO: Still wondering whether we should re-export THREE or not.
 export * as THREE from "three";

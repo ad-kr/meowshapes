@@ -1,9 +1,12 @@
 import { darkColors, lightColors } from "./colors.ts";
 import { THREE, type Sphere } from "./index.ts";
-import type { Line, Text } from "./shapeTypes.ts";
+import type { Text } from "./shapeTypes.ts";
 import { toVec3, vec3, type Vec3 } from "./utils.ts";
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
 import { Points } from "./points.ts";
+import { LineMaterial } from "three/addons/lines/LineMaterial.js";
+import { Line2 } from "three/addons/lines/Line2.js";
+import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { defaultFont } from "./defaultFont.ts";
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
@@ -17,6 +20,7 @@ type LineStyle =
 			color?: THREE.ColorRepresentation;
 			dashSize?: number;
 			gapSize?: number;
+			lineWidth?: number;
 	  };
 
 const toLineStyle = (style: LineStyle) => {
@@ -200,40 +204,44 @@ export class Ctx {
 	 * Creates and adds a line to the scene.
 	 * @param start A vector representing the start point of the line.
 	 * @param end A vector representing the end point of the line.
-	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize and gapSize. Defaults to the context's foreground color.
+	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
 	 * @returns The created THREE.Line instance. For convenience, this is typed as {@link Line}.
 	 * @example
 	 * ctx.line([0, 0, 0], [10, 10, 10]); // Uses default foreground color
 	 * ctx.line(vec3(0, 0, 0), vec3(10, 0, 0), "dashed");
 	 * ctx.line([0, 0, 0], [0, 10, 0], { color: "red", dashSize: 5, gapSize: 2 });
 	 */
-	line = (start: Vec3, end: Vec3, style?: LineStyle): Line => {
+	line = (start: Vec3, end: Vec3, style?: LineStyle): Line2 => {
 		return this.lineStrip([start, end], style);
 	};
 
 	/**
 	 * Creates and adds a line strip to the scene.
 	 * @param points An array of vectors representing the points of the line strip.
-	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize and gapSize. Defaults to the context's foreground color.
+	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
 	 * @returns The created THREE.Line instance. For convenience, this is typed as {@link Line}.
 	 * @example
 	 * ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]]); // Uses default foreground color
 	 * ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]], "dashed");
 	 * ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]], { color: "blue", dashSize: 3, gapSize: 1 });
 	 */
-	lineStrip = (points: Vec3[], style?: LineStyle): Line => {
+	lineStrip = (points: Vec3[], style?: LineStyle): Line2 => {
 		const vecPoints = points.map(toVec3);
 
-		const geometry = new THREE.BufferGeometry().setFromPoints(vecPoints);
+		const geometry = new LineGeometry().setFromPoints(vecPoints);
 
 		const lineStyle = toLineStyle(style);
-		const material = new THREE.LineDashedMaterial({
+		const dashed =
+			lineStyle.dashSize !== undefined && lineStyle.gapSize !== undefined;
+		const material = new LineMaterial({
 			color: lineStyle.color ?? this.COLOR.FOREGROUND,
 			dashSize: lineStyle.dashSize ?? 0,
 			gapSize: lineStyle.gapSize ?? 0,
+			linewidth: lineStyle.lineWidth ?? window.devicePixelRatio,
+			dashed,
 		});
 
-		const line = new THREE.Line(geometry, material);
+		const line = new Line2(geometry, material);
 		line.computeLineDistances();
 		this.spawn(line);
 		return line;
@@ -313,7 +321,7 @@ export class Ctx {
 	/**
 	 * Creates and adds a graph of a mathematical function to the scene.
 	 * @param func The mathematical function to graph.
-	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize and gapSize. Defaults to the context's foreground color.
+	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
 	 * @param range (Optional) The range [from, to] over which to graph the function.
 	 * @returns The created THREE.Line instance representing the graph. For convenience, this is typed as {@link Line}.
 	 * @example
