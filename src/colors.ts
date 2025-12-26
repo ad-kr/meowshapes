@@ -1,5 +1,7 @@
 import { color } from "./utils.ts";
 
+export type Theme = "light" | "dark";
+
 // The reason why we're using getters here is to ensure that the returned colors are new instances each time
 // they are accessed. Returning a static color causes issues, for example when trying to lerp between colors 🤷
 

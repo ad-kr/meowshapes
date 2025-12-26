@@ -22,8 +22,6 @@ export class Renderer {
 		const scene = new THREE.Scene();
 		const ctx = new Ctx(scene);
 
-		scene.background = ctx.COLOR.BACKGROUND;
-
 		setup(ctx);
 
 		this.resizeObserver = new ResizeObserver(() => {

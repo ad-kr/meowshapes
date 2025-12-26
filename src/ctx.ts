@@ -1,4 +1,4 @@
-import { darkColors, lightColors } from "./colors.ts";
+import { darkColors, lightColors, type Theme } from "./colors.ts";
 import { THREE, type Sphere } from "./index.ts";
 import type { Text } from "./shapeTypes.ts";
 import { toVec3, vec3, type Vec3 } from "./utils.ts";
@@ -73,7 +73,7 @@ export class Ctx {
 	/**
 	 * The current theme of the context. This can be used to adjust colors and styles based on light or dark mode.
 	 */
-	private theme: "light" | "dark" = "light";
+	private theme: Theme = "light";
 
 	/**
 	 * The font used for rendering text. Loaded on demand.
@@ -91,6 +91,14 @@ export class Ctx {
 		this.camera.position.set(-1, 1, 1);
 		this.camera.lookAt(0, 0, 0);
 	}
+
+	/**
+	 * Sets the current theme of the renderer, affecting colors used in the rendering context.
+	 * @param theme The theme to set.
+	 */
+	setTheme = (theme: Theme) => {
+		this.theme = theme;
+	};
 
 	/**
 	 * Sets the background color of the canvas.
