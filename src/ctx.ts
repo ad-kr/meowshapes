@@ -1,7 +1,7 @@
 import { darkColors, lightColors, type Theme } from "./colors.ts";
 import { THREE, type Sphere } from "./index.ts";
-import type { Cone, Text } from "./shapeTypes.ts";
-import { toVec3, vec3, type Vec3 } from "./utils.ts";
+import { Arrow, type Cone, type Text } from "./shapeTypes.ts";
+import { DIR, toVec3, vec3, type Vec3 } from "./utils.ts";
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
 import { Points } from "./points.ts";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
@@ -259,44 +259,48 @@ export class Ctx {
 	 * Creates and adds an arrow to the scene.
 	 * @param start The start point of the arrow.
 	 * @param end The end point of the arrow.
-	 * @param color The color of the arrow.
+	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
 	 * @returns The created THREE.ArrowHelper instance.
 	 * @example
 	 * ctx.arrow([0, 0, 0], [10, 10, 10]); // Uses default foreground color
 	 * ctx.arrow([0, 0, 0], [10, 0, 0], "red");
 	 */
-	arrow = (start: Vec3, end: Vec3, color?: THREE.ColorRepresentation) => {
+	arrow = (start: Vec3, end: Vec3, style?: LineStyle) => {
 		const startVec = toVec3(start);
 		const endVec = toVec3(end);
 
-		const line = endVec.clone().sub(startVec);
-		const length = line.length();
-		const direction = line.clone().normalize();
+		const vec = endVec.clone().sub(startVec);
+		const length = vec.length();
+		const dir = endVec.clone().sub(startVec).normalize();
 
-		const arrowHelper = new THREE.ArrowHelper(
-			direction,
-			startVec,
-			length,
-			color ?? this.COLOR.FOREGROUND,
-			12,
-			12
+		const lineStyle = toLineStyle(style);
+		const color = lineStyle.color ?? this.COLOR.FOREGROUND;
+
+		const line = this.line(
+			[0, 0, 0],
+			DIR.Y.multiplyScalar(length - 12),
+			lineStyle
 		);
+		const cone = this.cone(12, 6, color);
+		cone.geometry.translate(0, length - 6, 0);
 
-		this.spawn(arrowHelper);
-		return arrowHelper;
+		const arrow = new Arrow(dir, line, cone);
+		this.spawn(arrow);
+
+		return arrow;
 	};
 
 	/**
 	 * Creates an arrow starting from the origin (0, 0, 0) to the given vector.
 	 * @param vec The vector to be drawn.
-	 * @param color The color of the arrow.
+	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
 	 * @returns The created THREE.ArrowHelper instance.
 	 * @example
 	 * ctx.vector([10, 10, 10]); // Uses default foreground color
 	 * ctx.vector(vec3(10, 0, 0), "blue");
 	 */
-	vector = (vec: Vec3, color?: THREE.ColorRepresentation) => {
-		return this.arrow(vec3(0, 0, 0), vec, color);
+	vector = (vec: Vec3, style?: LineStyle) => {
+		return this.arrow(vec3(0, 0, 0), vec, style);
 	};
 
 	/**
