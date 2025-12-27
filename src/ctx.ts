@@ -284,7 +284,7 @@ export class Ctx {
 		const cone = this.cone(12, 6, color);
 		cone.geometry.translate(0, length - 6, 0);
 
-		const arrow = new Arrow(dir, line, cone);
+		const arrow = new Arrow(startVec, dir, line, cone);
 		this.spawn(arrow);
 
 		return arrow;

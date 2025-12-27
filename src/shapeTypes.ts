@@ -22,7 +22,7 @@ export class Arrow extends Object3D {
 	 */
 	cone: Cone;
 
-	constructor(dir: Vec3, line: Line2, cone: Cone) {
+	constructor(pos: Vec3, dir: Vec3, line: Line2, cone: Cone) {
 		super();
 
 		this.line = line;
@@ -34,7 +34,10 @@ export class Arrow extends Object3D {
 		this.add(this.line);
 		this.add(this.cone);
 
+		const posVector = toVec3(pos);
 		const dirVector = toVec3(dir);
+
+		this.position.copy(posVector);
 
 		if (dirVector.y > 0.9999) {
 			this.quaternion.set(0, 0, 0, 1);
