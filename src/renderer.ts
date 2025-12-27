@@ -1,3 +1,4 @@
+import { cssColors } from "./colors.ts";
 import { Ctx } from "./ctx.ts";
 import { THREE } from "./index.ts";
 
@@ -15,12 +16,50 @@ export class Renderer {
 		this.inner = new THREE.WebGLRenderer({ antialias: true });
 
 		this.wrapper = document.createElement("div");
+		this.wrapper.style.position = "relative";
 		this.wrapper.style.width = "100%";
 		this.wrapper.style.height = "100%";
 		this.wrapper.appendChild(this.inner.domElement);
 
+		if (document.getElementById("renderer-styles") === null) {
+			const style = document.createElement("style");
+			style.id = "renderer-styles";
+
+			style.innerText = `
+                .renderer-button {
+                    position: absolute;
+                    top: 0;
+                    
+                    font-family: Geist, sans-serif;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: ${cssColors.light.background};
+
+                    background-color: ${cssColors.light.foreground};
+                    border: none;
+                    border-radius: 8px;
+
+                    padding: 8px 16px;
+                    margin: 16px;
+                    cursor: pointer;
+                }
+                .renderer-button:hover {
+                    background-color: ${cssColors.light.muted};
+                }
+                .renderer-button.dark {
+                    background-color: ${cssColors.dark.foreground};
+                    color: ${cssColors.dark.background};
+                }
+                .renderer-button.dark:hover {
+                    background-color: ${cssColors.dark.muted};
+                }
+            `;
+
+			document.head.appendChild(style);
+		}
+
 		const scene = new THREE.Scene();
-		const ctx = new Ctx(scene);
+		const ctx = new Ctx(scene, this.wrapper);
 
 		setup(ctx);
 

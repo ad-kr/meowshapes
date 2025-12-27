@@ -2,18 +2,36 @@ import { color } from "./utils.ts";
 
 export type Theme = "light" | "dark";
 
+export const cssColors = {
+	light: {
+		foreground: "#0a0a0a",
+		muted: "#333333",
+		secondary: "#e5e5e5",
+		background: "#ffffff",
+	},
+	dark: {
+		foreground: "#ffffff",
+		muted: "#e5e5e5",
+		secondary: "#333333",
+		background: "#0a0a0a",
+	},
+};
+
 // The reason why we're using getters here is to ensure that the returned colors are new instances each time
 // they are accessed. Returning a static color causes issues, for example when trying to lerp between colors 🤷
 
 export const lightColors = {
 	get FOREGROUND() {
-		return color("#0a0a0a");
+		return color(cssColors.light.foreground);
+	},
+	get MUTED() {
+		return color(cssColors.light.muted);
 	},
 	get SECONDARY() {
-		return color("#e5e5e5");
+		return color(cssColors.light.secondary);
 	},
 	get BACKGROUND() {
-		return color("#ffffff");
+		return color(cssColors.light.background);
 	},
 	/**
 	 * Interpolation between FOREGROUND and BACKGROUND colors given a factor between 0 and 1.
@@ -27,13 +45,16 @@ export const lightColors = {
 
 export const darkColors = {
 	get FOREGROUND() {
-		return color("#f0f0f0");
+		return color(cssColors.dark.foreground);
+	},
+	get MUTED() {
+		return color(cssColors.dark.muted);
 	},
 	get SECONDARY() {
-		return color("#333333");
+		return color(cssColors.dark.secondary);
 	},
 	get BACKGROUND() {
-		return color("#0a0a0a");
+		return color(cssColors.dark.background);
 	},
 	gray: lightColors.gray,
 };

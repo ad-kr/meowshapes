@@ -51,6 +51,11 @@ export class Ctx {
 	private readonly sceneRef: THREE.Scene;
 
 	/**
+	 * A reference to the wrapper div containing the renderer's DOM element.
+	 */
+	private readonly wrapperRef: HTMLDivElement;
+
+	/**
 	 * The current rendering mode.
 	 *   - `RETAINED`: Objects added to the scene will remain until removed manually.
 	 *   - `IMMEDIATE`: Objects added to the scene will be removed at the beginning of the next frame unless re-added
@@ -80,10 +85,13 @@ export class Ctx {
 	 */
 	private font: Font | null = null;
 
-	constructor(scene: THREE.Scene) {
+	constructor(scene: THREE.Scene, wrapper: HTMLDivElement) {
 		this.sceneRef = scene;
+		this.wrapperRef = wrapper;
 		this.updateFns = [];
 		this.garbage = [];
+
+		this.background(this.COLOR.BACKGROUND);
 
 		this.camera = new THREE.OrthographicCamera();
 		this.camera.near = -1000000;
@@ -112,7 +120,6 @@ export class Ctx {
 	 */
 	background = (color: THREE.ColorRepresentation) => {
 		this.sceneRef.background = new THREE.Color(color);
-		this.sceneRef.add;
 	};
 
 	/**
@@ -208,6 +215,39 @@ export class Ctx {
 		}
 
 		return textMesh;
+	};
+
+	/**
+	 * Creates a button element and adds it to the renderer's DOM wrapper.
+	 * ### Example
+	 * ```js
+	 * let count = 0;
+	 * const button = ctx.button("Increase", () => {
+	 *     count++;
+	 * });
+	 *
+	 * button.style.right = "10px";
+	 *
+	 * ctx.update(() => {
+	 *     ctx.text(`Count: ${count}`);
+	 * });
+	 * ```
+	 * @param label The text label of the button.
+	 * @param onClick The callback function to be executed when the button is clicked.
+	 * @returns The created HTMLButtonElement.
+	 */
+	button = (label: string, onClick: () => void) => {
+		const button = document.createElement("button");
+		button.textContent = label;
+		button.onclick = onClick;
+
+		button.classList.add("renderer-button");
+		if (this.theme === "dark") {
+			button.classList.add("dark");
+		}
+
+		this.wrapperRef.appendChild(button);
+		return button;
 	};
 
 	/**
