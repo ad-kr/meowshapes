@@ -93,11 +93,13 @@ export class Ctx {
 	}
 
 	/**
-	 * Sets the current theme of the renderer, affecting colors used in the rendering context.
+	 * Sets the current theme of the renderer, affecting colors used in the rendering context. This also sets the
+	 * background to match the theme.
 	 * @param theme The theme to set.
 	 */
 	setTheme = (theme: Theme) => {
 		this.theme = theme;
+		this.background(this.COLOR.BACKGROUND);
 	};
 
 	/**
