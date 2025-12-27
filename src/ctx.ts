@@ -336,11 +336,11 @@ export class Ctx {
 	 * ctx.cone(10, 5); // Uses default foreground color
 	 * ctx.cone(15, 7, "green");
 	 */
-	cone(
+	cone = (
 		height: number,
 		radius: number,
 		color?: THREE.ColorRepresentation
-	): Cone {
+	): Cone => {
 		const geometry = new THREE.ConeGeometry(radius, height);
 		const material = new THREE.MeshBasicMaterial({
 			color: color ?? this.COLOR.FOREGROUND,
@@ -349,7 +349,7 @@ export class Ctx {
 		this.spawn(mesh);
 
 		return mesh;
-	}
+	};
 
 	/**
 	 * Creates and adds a graph of a mathematical function to the scene.
