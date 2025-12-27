@@ -264,8 +264,10 @@ export class Ctx {
 	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
 	 * @returns The created THREE.ArrowHelper instance.
 	 * @example
+	 * ```js
 	 * ctx.arrow([0, 0, 0], [10, 10, 10]); // Uses default foreground color
 	 * ctx.arrow([0, 0, 0], [10, 0, 0], "red");
+	 * ```
 	 */
 	arrow = (start: Vec3, end: Vec3, style?: LineStyle) => {
 		const startVec = toVec3(start);
@@ -283,7 +285,7 @@ export class Ctx {
 			DIR.Y.multiplyScalar(length - 12),
 			lineStyle
 		);
-		const cone = this.cone(12, 6, color);
+		const cone = this.cone([0, 0, 0], 12, 6, color);
 		cone.geometry.translate(0, length - 6, 0);
 
 		const arrow = new Arrow(startVec, dir, line, cone);
@@ -343,15 +345,18 @@ export class Ctx {
 	 * ctx.cone(15, 7, "green");
 	 */
 	cone = (
+		position: Vec3,
 		height: number,
 		radius: number,
 		color?: THREE.ColorRepresentation
 	): Cone => {
+		const pos = toVec3(position);
 		const geometry = new THREE.ConeGeometry(radius, height);
 		const material = new THREE.MeshBasicMaterial({
 			color: color ?? this.COLOR.FOREGROUND,
 		});
 		const mesh = new THREE.Mesh(geometry, material);
+		mesh.position.copy(pos);
 		this.spawn(mesh);
 
 		return mesh;
