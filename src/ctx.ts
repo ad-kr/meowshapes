@@ -263,7 +263,6 @@ export class Ctx {
 	 * @param end The end point of the arrow.
 	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
 	 * @returns The created THREE.ArrowHelper instance.
-	 * @example
 	 * ```js
 	 * ctx.arrow([0, 0, 0], [10, 10, 10]); // Uses default foreground color
 	 * ctx.arrow([0, 0, 0], [10, 0, 0], "red");
