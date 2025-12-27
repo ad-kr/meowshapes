@@ -1,6 +1,6 @@
 import { darkColors, lightColors, type Theme } from "./colors.ts";
 import { THREE, type Sphere } from "./index.ts";
-import type { Text } from "./shapeTypes.ts";
+import type { Cone, Text } from "./shapeTypes.ts";
 import { toVec3, vec3, type Vec3 } from "./utils.ts";
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
 import { Points } from "./points.ts";
@@ -325,6 +325,31 @@ export class Ctx {
 
 		return mesh;
 	};
+
+	/**
+	 * Creates and adds a cone to the scene.
+	 * @param height Height of the cone from base to tip
+	 * @param radius Radius of the cone base
+	 * @param color (Optional) A Three.js color representation for the cone. Defaults to the context's foreground color.
+	 * @returns The created THREE.Mesh instance representing the cone. For convenience, this is typed as {@link Cone}.
+	 * @example
+	 * ctx.cone(10, 5); // Uses default foreground color
+	 * ctx.cone(15, 7, "green");
+	 */
+	cone(
+		height: number,
+		radius: number,
+		color?: THREE.ColorRepresentation
+	): Cone {
+		const geometry = new THREE.ConeGeometry(radius, height);
+		const material = new THREE.MeshBasicMaterial({
+			color: color ?? this.COLOR.FOREGROUND,
+		});
+		const mesh = new THREE.Mesh(geometry, material);
+		this.spawn(mesh);
+
+		return mesh;
+	}
 
 	/**
 	 * Creates and adds a graph of a mathematical function to the scene.
