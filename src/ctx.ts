@@ -588,7 +588,10 @@ export class Ctx {
 		style?: LineStyle,
 		range?: [number, number]
 	) => {
-		const cameraExtent = this.getCameraExtent();
+		const { x: scaleX, y: scaleY, z: scaleZ } = this.camera.scale;
+		const scale = Math.min(scaleX, scaleY, scaleZ);
+
+		const cameraExtent = this.getCameraExtent() * scale;
 		const from = range?.[0] ?? -cameraExtent;
 		const to = range?.[1] ?? cameraExtent;
 
@@ -596,7 +599,9 @@ export class Ctx {
 			throw new Error("Invalid range: 'to' must be greater than 'from'");
 		}
 
-		const pointCount = Math.round((to - from) * 0.5);
+		// At scale 1, we want approximately one point every 2 screen pixels
+		const resolution = 0.5 / scale;
+		const pointCount = Math.round((to - from) * resolution);
 		const points: Vec3[] = [];
 		for (let i = 0; i <= pointCount; i++) {
 			const x = from + (i / pointCount) * (to - from);
