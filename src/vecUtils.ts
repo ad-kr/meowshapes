@@ -14,13 +14,14 @@ export const vec4 = (x: number, y: number, z: number, w: number) => {
 };
 
 // Type definitions for flexible vector inputs
-export type Vec2 = [number, number] | THREE.Vector2;
+export type Vec2 = number | [number, number] | THREE.Vector2;
 export type Vec3 = [number, number, number] | THREE.Vector3 | Vec2;
 export type Vec4 = [number, number, number, number] | THREE.Vector4 | Vec3;
 
 /** Converts various vector representations to THREE.Vector2. */
 export const toVec2 = (v: Vec2) => {
 	if (v instanceof THREE.Vector2) return v;
+	if (typeof v === "number") return new THREE.Vector2(v, v);
 	return new THREE.Vector2(v[0], v[1]);
 };
 
