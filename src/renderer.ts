@@ -97,9 +97,11 @@ export class Renderer {
 	/**
 	 * Returns the DOM element used by the inner THREE.js WebGLRenderer. Add this to your document to display the
 	 * rendered content. The element tries to fill the size of its parent element.
-	 * @example
+	 * ### Example
+	 * ```js
 	 * const renderer = new Renderer(..);
 	 * document.body.appendChild(renderer.element());
+	 * ```
 	 */
 	element = () => this.wrapper;
 

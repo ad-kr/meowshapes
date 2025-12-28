@@ -43,11 +43,13 @@ export class Ctx {
 	 * The active camera used for rendering the scene. Modify or override it to change the view.
 	 *
 	 * Defaults to an orthographic camera positioned at (-1, 1, 1) looking at the origin.
-	 * @example
+	 * ### Example
+	 * ```js
 	 * ctx.camera.position.set(10, 10, 10);
 	 * ctx.camera.lookAt(0, 0, 0);
 	 *
 	 * ctx.camera = new THREE.PerspectiveCamera(75, 16 / 9, 0.1, 1000);
+	 * ```
 	 */
 	camera: THREE.OrthographicCamera;
 
@@ -136,11 +138,13 @@ export class Ctx {
 
 	/**
 	 * Sets the background color of the canvas.
-	 * @param color A Three.js color representation. E.g. "#ff0000", "red", 0xff0000, etc.
-	 * @example
+	 * ### Example
+	 * ```js
 	 * ctx.background("#ff0000");
 	 * ctx.background("red");
 	 * ctx.background(0xff0000);
+	 * ```
+	 * @param color A Three.js color representation. E.g. "#ff0000", "red", 0xff0000, etc.
 	 */
 	background = (color: THREE.ColorRepresentation) => {
 		this.sceneRef.background = new THREE.Color(color);
@@ -156,14 +160,16 @@ export class Ctx {
 	 * ### Performance
 	 * Prefer to use retained objects and only modify their properties inside update functions for better performance.
 	 *
-	 * @param fn Update function, receiving delta time `dt` and `elapsed` in seconds.
-	 * @example
+	 * ### Example
+	 * ```js
 	 * ctx.update((dt, elapsed) => {
 	 *     // Moves a sphere along the X axis over time.
 	 *     const position = vec3(elapsed * 20, 0, 0);
 	 *     const radius = 5;
 	 *     ctx.sphere(position, radius);
 	 * });
+	 * ```
+	 * @param fn Update function, receiving delta time `dt` and `elapsed` in seconds.
 	 */
 	update = (fn: UpdateFn) => this.updateFns.push(fn);
 
@@ -176,13 +182,15 @@ export class Ctx {
 
 	/**
 	 * Creates and adds 3D text to the scene.
+	 * ### Example
+	 * ```js
+	 * ctx.text("Hello, World!", 24);
+	 * ```
 	 * @param value The text string to be rendered.
 	 * @param size The size of the text. If null, defaults to 16.
 	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
 	 * @param direction (Optional) The direction of the text. Can be "ltr" (left-to-right), "rtl" (right-to-left), or "tb" (top-to-bottom).
 	 * @returns The created THREE.Mesh instance representing the text. For convenience, this is typed as {@link Text}.
-	 * @example
-	 * ctx.text("Hello, World!", 24);
 	 */
 	text = (
 		value: string,
@@ -212,13 +220,15 @@ export class Ctx {
 
 	/**
 	 * A billboarding version of {@link text}, which always faces the camera.
+	 * ### Example
+	 * ```js
+	 * ctx.textBillboard("Hello, World!", 24);
+	 * ```
 	 * @param value The text string to be rendered.
 	 * @param size The size of the text. If null, defaults to 16.
 	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
 	 * @param direction (Optional) The direction of the text. Can be "ltr" (left-to-right), "rtl" (right-to-left), or "tb" (top-to-bottom).
 	 * @returns The created THREE.Mesh instance representing the billboarding text. For convenience, this is typed as {@link Text}.
-	 * @example
-	 * ctx.textBillboard("Hello, World!", 24);
 	 */
 	textBillboard = (
 		value: string,
@@ -251,8 +261,6 @@ export class Ctx {
 	 *     count++;
 	 * });
 	 *
-	 * button.style.right = "10px";
-	 *
 	 * ctx.update(() => {
 	 *     ctx.text(`Count: ${count}`);
 	 * });
@@ -277,14 +285,16 @@ export class Ctx {
 
 	/**
 	 * Creates and adds a line to the scene.
+	 * ### Example
+	 * ```js
+	 * ctx.line([0, 0, 0], [10, 10, 10]); // Uses default foreground color
+	 * ctx.line(vec3(0, 0, 0), vec3(10, 0, 0), "dashed");
+	 * ctx.line([0, 0, 0], [0, 10, 0], { color: "red", dashSize: 5, gapSize: 2 });
+	 * ```
 	 * @param start A vector representing the start point of the line.
 	 * @param end A vector representing the end point of the line.
 	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
 	 * @returns The created THREE.Line instance. For convenience, this is typed as {@link Line}.
-	 * @example
-	 * ctx.line([0, 0, 0], [10, 10, 10]); // Uses default foreground color
-	 * ctx.line(vec3(0, 0, 0), vec3(10, 0, 0), "dashed");
-	 * ctx.line([0, 0, 0], [0, 10, 0], { color: "red", dashSize: 5, gapSize: 2 });
 	 */
 	line = (start: Vec3, end: Vec3, style?: LineStyle): Line2 => {
 		return this.lineStrip([start, end], style);
@@ -292,13 +302,15 @@ export class Ctx {
 
 	/**
 	 * Creates and adds a line strip to the scene.
-	 * @param points An array of vectors representing the points of the line strip.
-	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
-	 * @returns The created THREE.Line instance. For convenience, this is typed as {@link Line}.
-	 * @example
+	 * ### Example
+	 * ```js
 	 * ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]]); // Uses default foreground color
 	 * ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]], "dashed");
 	 * ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]], { color: "blue", dashSize: 3, gapSize: 1 });
+	 * ```
+	 * @param points An array of vectors representing the points of the line strip.
+	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
+	 * @returns The created THREE.Line instance. For convenience, this is typed as {@link Line}.
 	 */
 	lineStrip = (points: Vec3[], style?: LineStyle): Line2 => {
 		const vecPoints = points.map(toVec3);
@@ -324,14 +336,15 @@ export class Ctx {
 
 	/**
 	 * Creates and adds an arrow to the scene.
-	 * @param start The start point of the arrow.
-	 * @param end The end point of the arrow.
-	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
-	 * @returns The created THREE.ArrowHelper instance.
+	 * ### Example
 	 * ```js
 	 * ctx.arrow([0, 0, 0], [10, 10, 10]); // Uses default foreground color
 	 * ctx.arrow([0, 0, 0], [10, 0, 0], "red");
 	 * ```
+	 * @param start The start point of the arrow.
+	 * @param end The end point of the arrow.
+	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
+	 * @returns The created THREE.ArrowHelper instance.
 	 */
 	arrow = (start: Vec3, end: Vec3, style?: LineStyle) => {
 		const startVec = toVec3(start);
@@ -360,12 +373,14 @@ export class Ctx {
 
 	/**
 	 * Creates an arrow starting from the origin (0, 0, 0) to the given vector.
+	 * ### Example
+	 * ```js
+	 * ctx.vector([10, 10, 10]); // Uses default foreground color
+	 * ctx.vector(vec3(10, 0, 0), "blue");
+	 * ```
 	 * @param vec The vector to be drawn.
 	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
 	 * @returns The created THREE.ArrowHelper instance.
-	 * @example
-	 * ctx.vector([10, 10, 10]); // Uses default foreground color
-	 * ctx.vector(vec3(10, 0, 0), "blue");
 	 */
 	vector = (vec: Vec3, style?: LineStyle) => {
 		return this.arrow(vec3(0, 0, 0), vec, style);
@@ -373,13 +388,15 @@ export class Ctx {
 
 	/**
 	 * Creates and adds a sphere to the scene.
+	 * ### Example
+	 * ```js
+	 * ctx.sphere([0, 0, 0], 3); // Uses default foreground color
+	 * ctx.sphere(vec3(0, 0, 0), 5, "red");
+	 * ```
 	 * @param position A vector representing the position of the sphere.
 	 * @param radius The radius of the sphere.
 	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
 	 * @returns The created THREE.Mesh instance representing the sphere. For convenience, this is typed as {@link Sphere}.
-	 * @example
-	 * ctx.sphere([0, 0, 0], 3); // Uses default foreground color
-	 * ctx.sphere(vec3(0, 0, 0), 5, "red");
 	 */
 	sphere = (position: Vec3, radius: number, color?: ObjectColor): Sphere => {
 		const pos = toVec3(position);
@@ -394,13 +411,15 @@ export class Ctx {
 
 	/**
 	 * Creates and adds a cone to the scene.
+	 * ### Example
+	 * ```js
+	 * ctx.cone(10, 5); // Uses default foreground color
+	 * ctx.cone(15, 7, "green");
+	 * ```
 	 * @param height Height of the cone from base to tip
 	 * @param radius Radius of the cone base
 	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
 	 * @returns The created THREE.Mesh instance representing the cone. For convenience, this is typed as {@link Cone}.
-	 * @example
-	 * ctx.cone(10, 5); // Uses default foreground color
-	 * ctx.cone(15, 7, "green");
 	 */
 	cone = (
 		position: Vec3,
@@ -422,15 +441,17 @@ export class Ctx {
 	// computation fails
 	/**
 	 * Creates and adds a graph of a mathematical function to the scene.
-	 * @param func The mathematical function to graph.
-	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
-	 * @param range (Optional) The range [from, to] over which to graph the function.
-	 * @returns The created THREE.Line instance representing the graph. For convenience, this is typed as {@link Line}.
-	 * @example
+	 * ### Example
+	 * ```js
 	 * // Graph a sine wave from -10 to 10
 	 * ctx.graph(x => Math.sin(x), "dashed", [-10, 10]);
 	 * // Graph a quadratic function over the default range
 	 * ctx.graph(x => x * x, { color: "blue", dashSize: 5, gapSize: 2 });
+	 * ```
+	 * @param func The mathematical function to graph.
+	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
+	 * @param range (Optional) The range [from, to] over which to graph the function.
+	 * @returns The created THREE.Line instance representing the graph. For convenience, this is typed as {@link Line}.
 	 */
 	graph = (
 		func: (x: number) => number,
@@ -458,15 +479,17 @@ export class Ctx {
 
 	/**
 	 * Creates and adds a grid helper to the scene.
+	 * ### Example
+	 * ```js
+	 * ctx.grid(); // Default grid
+	 * ctx.grid(500, 25); // Grid of size 500 with 25 unit spacing
+	 * ctx.grid(400, 20, "gray", [0, 0, 1]); // Grid with normal along Z axis
+	 * ```
 	 * @param size The size of the grid.
 	 * @param spacing The spacing between grid lines. Defaults to 50 units.
 	 * @param color The color of the grid lines. Defaults to the context's secondary color.
 	 * @param normal The normal vector defining the orientation of the grid. Defaults to (0, 1, 0).
 	 * @returns The created THREE.GridHelper instance.
-	 * @example
-	 * ctx.grid(); // Default grid
-	 * ctx.grid(500, 25); // Grid of size 500 with 25 unit spacing
-	 * ctx.grid(400, 20, "gray", [0, 0, 1]); // Grid with normal along Z axis
 	 */
 	grid = (
 		size?: number | null,
@@ -494,11 +517,8 @@ export class Ctx {
 
 	/**
 	 * An efficient way to render large point clouds.
-	 * @param points Array of point positions.
-	 * @param size Size of the points. Defaults to 2. All points are squares facing the camera.
-	 * @param color Color of the points. Defaults to the context's foreground color.
-	 * @returns Points helper object.
-	 * @example
+	 * ### Example
+	 * ```js
 	 * const pts = new Array(1000).fill(vec3(0, 0, 0));
 	 * const points = ctx.points(pts, 3, "red");
 	 *
@@ -509,6 +529,11 @@ export class Ctx {
 	 *
 	 * const color = points.getColor(0); // Get color of first point
 	 * points.setColor(0, "blue");
+	 * ```
+	 * @param points Array of point positions.
+	 * @param size Size of the points. Defaults to 2. All points are squares facing the camera.
+	 * @param color Color of the points. Defaults to the context's foreground color.
+	 * @returns Points helper object.
 	 */
 	points = (
 		points: Vec3[],
