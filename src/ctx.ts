@@ -7,7 +7,7 @@ import {
 } from "./colorUtils.ts";
 import { THREE, type Sphere } from "./index.ts";
 import { Arrow, type Cone, type Text } from "./shapeTypes.ts";
-import { DIR, toVec3, vec3, type Vec3 } from "./vecUtils.ts";
+import { DIR, toVec2, toVec3, vec3, type Vec2, type Vec3 } from "./vecUtils.ts";
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
 import { Points } from "./points.ts";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
@@ -384,6 +384,136 @@ export class Ctx {
 	 */
 	vector = (vec: Vec3, style?: LineStyle) => {
 		return this.arrow(vec3(0, 0, 0), vec, style);
+	};
+
+	/**
+	 * Creates and adds a cuboid (rectangular box) to the scene.
+	 * ### Example
+	 * ```js
+	 * ctx.cuboid([0, 0, 0], [10, 5, 3]);
+	 * ctx.cuboid(vec3(5, 5, 5), vec3(2, 4, 6), "green");
+	 * ```
+	 * @param position A vector representing the position of the cuboid's center.
+	 * @param size A vector representing the width, height and depth of the cuboid.
+	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
+	 * @returns The created THREE.Mesh instance representing the cuboid.
+	 */
+	cuboid = (position: Vec3, size: Vec3, color?: ObjectColor) => {
+		const pos = toVec3(position);
+		const sizeVec = toVec3(size);
+		const geometry = new THREE.BoxGeometry(sizeVec.x, sizeVec.y, sizeVec.z);
+		const material = toMaterial(color, this.COLOR.FOREGROUND);
+		const mesh = new THREE.Mesh(geometry, material);
+		mesh.position.copy(pos);
+		this.spawn(mesh);
+		return mesh;
+	};
+
+	/**
+	 * Creates and adds a circle to the scene.
+	 * ### Example
+	 * ```js
+	 * ctx.circle([0, 0, 0], 5);
+	 * ctx.circle(vec3(10, 10, 0), 8, "blue");
+	 * ```
+	 * @param position A vector representing the position of the circle's center.
+	 * @param radius The radius of the circle.
+	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
+	 * @returns The created THREE.Mesh instance representing the circle.
+	 */
+	circle = (position: Vec3, radius: number, color?: ObjectColor) => {
+		const pos = toVec3(position);
+		const geometry = new THREE.CircleGeometry(radius);
+		const material = toMaterial(color, this.COLOR.FOREGROUND);
+		const mesh = new THREE.Mesh(geometry, material);
+		mesh.position.copy(pos);
+		this.spawn(mesh);
+		return mesh;
+	};
+
+	/**
+	 * Creates and adds a cylinder to the scene.
+	 * ### Example
+	 * ```js
+	 * ctx.cylinder([0, 0, 0], 5, 5, 10);
+	 * ctx.cylinder(vec3(10, 10, 0), 4, 6, 12, "green");
+	 * ```
+	 * @param position A vector representing the position of the cylinder's center.
+	 * @param radiusTop The radius of the cylinder at the top.
+	 * @param radiusBottom The radius of the cylinder at the bottom.
+	 * @param height The height of the cylinder.
+	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
+	 * @returns The created THREE.Mesh instance representing the cylinder.
+	 */
+	cylinder = (
+		position: Vec3,
+		radiusTop: number,
+		radiusBottom: number,
+		height: number,
+		color?: ObjectColor
+	) => {
+		const pos = toVec3(position);
+		const geometry = new THREE.CylinderGeometry(
+			radiusTop,
+			radiusBottom,
+			height
+		);
+		const material = toMaterial(color, this.COLOR.FOREGROUND);
+		const mesh = new THREE.Mesh(geometry, material);
+		mesh.position.copy(pos);
+		this.spawn(mesh);
+		return mesh;
+	};
+
+	/**
+	 * Creates and adds a plane to the scene.
+	 * ### Example
+	 * ```js
+	 * ctx.plane([0, 0, 0], [10, 5]);
+	 * ctx.plane(vec3(10, 10, 0), vec2(8, 4), "gray");
+	 * ```
+	 * @param position A vector representing the position of the plane's center.
+	 * @param size A vector representing the width and height of the plane.
+	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
+	 * @returns The created THREE.Mesh instance representing the plane.
+	 */
+	plane = (position: Vec3, size: Vec2, color?: ObjectColor) => {
+		const pos = toVec3(position);
+		const sizeVec = toVec2(size);
+		const geometry = new THREE.PlaneGeometry(sizeVec.x, sizeVec.y);
+		const material = toMaterial(color, this.COLOR.FOREGROUND);
+		const mesh = new THREE.Mesh(geometry, material);
+		mesh.position.copy(pos);
+		this.spawn(mesh);
+		return mesh;
+	};
+
+	/**
+	 * Creates and adds a torus to the scene.
+	 * ### Example
+	 * ```js
+	 * ctx.torus([0, 0, 0], 10, 3);
+	 * ctx.torus(vec3(5, 5, 5), 8, 2, "purple");
+	 * ```
+	 * @param position A vector representing the position of the torus's center.
+	 * @param radius The radius from the center of the torus to the center of the tube.
+	 * @param tubeRadius The radius of the tube.
+	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
+	 * @returns The created THREE.Mesh instance representing the torus.
+	 */
+	torus = (
+		position: Vec3,
+		radius: number,
+		tubeRadius: number,
+		color?: ObjectColor
+	) => {
+		const pos = toVec3(position);
+		const geometry = new THREE.TorusGeometry(radius, tubeRadius);
+		const material = toMaterial(color, this.COLOR.FOREGROUND);
+		const mesh = new THREE.Mesh(geometry, material);
+		mesh.position.copy(pos);
+		this.spawn(mesh);
+		return mesh;
 	};
 
 	/**
