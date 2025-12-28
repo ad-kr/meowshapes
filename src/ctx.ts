@@ -680,6 +680,27 @@ export class Ctx {
 	};
 
 	/**
+	 * Spawns a Three.js object into the scene. In IMMEDIATE mode, the object will be removed at the beginning of the
+	 * next frame unless re-added in the next update call. See {@link mode} for more details.
+	 * @param object A Three.js object
+	 */
+	spawn = (object: THREE.Object3D) => {
+		this.sceneRef.add(object);
+
+		if (this.mode === "IMMEDIATE") {
+			this.garbage.push(object);
+		}
+	};
+
+	/**
+	 * Removes a Three.js object from the scene.
+	 * @param object A Three.js object
+	 */
+	remove = (object: THREE.Object3D) => {
+		this.sceneRef.remove(object);
+	};
+
+	/**
 	 * Advances the update functions by one tick. This is called internally by the Renderer on each animation frame.
 	 * When a tick occurs, the context enters "immediate mode". See {@link mode} for more details.
 	 * @internal Do not call this method directly. The Renderer handles this internally.
@@ -732,17 +753,5 @@ export class Ctx {
 			this.sceneRef.remove(object);
 		}
 		this.garbage = [];
-	}
-
-	/**
-	 * A simple wrapper around scene.add that makes handling immediate mode easier.
-	 * @param object A Three.js object
-	 */
-	private spawn(object: THREE.Object3D) {
-		this.sceneRef.add(object);
-
-		if (this.mode === "IMMEDIATE") {
-			this.garbage.push(object);
-		}
 	}
 }
