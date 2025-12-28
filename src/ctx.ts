@@ -324,7 +324,7 @@ export class Ctx {
 			color: lineStyle.color ?? this.COLOR.FOREGROUND,
 			dashSize: lineStyle.dashSize ?? 0,
 			gapSize: lineStyle.gapSize ?? 0,
-			linewidth: lineStyle.lineWidth ?? window.devicePixelRatio,
+			linewidth: lineStyle.lineWidth ?? 2,
 			dashed,
 		});
 
