@@ -1,6 +1,8 @@
 import { THREE } from "./index.ts";
-import { color as col, toVec3, vec3, type Vec3 } from "./utils.ts";
+import { toVec3, vec3, type Vec3 } from "./vecUtils.ts";
+import { color as col } from "./colorUtils.ts";
 
+// TODO: This belongs to the shapeTypes.ts file?
 /**
  * Helper class for working with point clouds.
  */

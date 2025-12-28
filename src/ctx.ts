@@ -1,7 +1,13 @@
-import { darkColors, lightColors, type Theme } from "./colors.ts";
+import {
+	darkColors,
+	lightColors,
+	toMaterial,
+	type ObjectColor,
+	type Theme,
+} from "./colorUtils.ts";
 import { THREE, type Sphere } from "./index.ts";
 import { Arrow, type Cone, type Text } from "./shapeTypes.ts";
-import { DIR, toVec3, vec3, type Vec3 } from "./utils.ts";
+import { DIR, toVec3, vec3, type Vec3 } from "./vecUtils.ts";
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
 import { Points } from "./points.ts";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
@@ -85,11 +91,19 @@ export class Ctx {
 	 */
 	private font: Font | null = null;
 
+	/**
+	 * Global hemisphere light added to the scene for basic illumination.
+	 */
+	private globalLight: THREE.HemisphereLight;
+
 	constructor(scene: THREE.Scene, wrapper: HTMLDivElement) {
 		this.sceneRef = scene;
 		this.wrapperRef = wrapper;
 		this.updateFns = [];
 		this.garbage = [];
+
+		this.globalLight = new THREE.HemisphereLight(0xffffff, 0x000000, 3);
+		this.spawn(this.globalLight);
 
 		this.background(this.COLOR.BACKGROUND);
 
@@ -108,6 +122,16 @@ export class Ctx {
 	setTheme = (theme: Theme) => {
 		this.theme = theme;
 		this.background(this.COLOR.BACKGROUND);
+	};
+
+	/**
+	 * Sets global light intensity
+	 * @param intensity Light intensity. Default is 3.
+	 * @returns The hemisphere light instance.
+	 */
+	light = (intensity?: number) => {
+		this.globalLight.intensity = intensity ?? 3;
+		return this.globalLight;
 	};
 
 	/**
@@ -154,6 +178,7 @@ export class Ctx {
 	 * Creates and adds 3D text to the scene.
 	 * @param value The text string to be rendered.
 	 * @param size The size of the text. If null, defaults to 16.
+	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
 	 * @param direction (Optional) The direction of the text. Can be "ltr" (left-to-right), "rtl" (right-to-left), or "tb" (top-to-bottom).
 	 * @returns The created THREE.Mesh instance representing the text. For convenience, this is typed as {@link Text}.
 	 * @example
@@ -162,12 +187,13 @@ export class Ctx {
 	text = (
 		value: string,
 		size?: number | null,
+		color?: ObjectColor,
 		direction?: "ltr" | "rtl" | "tb"
 	): Text => {
 		if (this.font === null) {
 			const loader = new FontLoader();
 			this.font = loader.parse(defaultFont);
-			return this.text(value, size, direction);
+			return this.text(value, size, color, direction);
 		}
 
 		const shapes = this.font.generateShapes(value, size ?? 16, direction);
@@ -178,10 +204,7 @@ export class Ctx {
 			-(geometry.boundingBox!.max.y - geometry.boundingBox!.min.y) * 0.5,
 			0
 		);
-		const material = new THREE.MeshBasicMaterial({
-			color: this.COLOR.FOREGROUND,
-			side: THREE.DoubleSide,
-		});
+		const material = toMaterial(color, this.COLOR.FOREGROUND);
 		const text = new THREE.Mesh(geometry, material);
 		this.spawn(text);
 		return text;
@@ -191,6 +214,7 @@ export class Ctx {
 	 * A billboarding version of {@link text}, which always faces the camera.
 	 * @param value The text string to be rendered.
 	 * @param size The size of the text. If null, defaults to 16.
+	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
 	 * @param direction (Optional) The direction of the text. Can be "ltr" (left-to-right), "rtl" (right-to-left), or "tb" (top-to-bottom).
 	 * @returns The created THREE.Mesh instance representing the billboarding text. For convenience, this is typed as {@link Text}.
 	 * @example
@@ -199,9 +223,10 @@ export class Ctx {
 	textBillboard = (
 		value: string,
 		size?: number | null,
+		color?: ObjectColor,
 		direction?: "ltr" | "rtl" | "tb"
 	) => {
-		const textMesh = this.text(value, size, direction);
+		const textMesh = this.text(value, size, color, direction);
 
 		const rotate = () => {
 			const cameraRotation = this.camera.quaternion.clone();
@@ -350,22 +375,16 @@ export class Ctx {
 	 * Creates and adds a sphere to the scene.
 	 * @param position A vector representing the position of the sphere.
 	 * @param radius The radius of the sphere.
-	 * @param color (Optional) A Three.js color representation for the sphere. Defaults to the context's foreground color.
+	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
 	 * @returns The created THREE.Mesh instance representing the sphere. For convenience, this is typed as {@link Sphere}.
 	 * @example
 	 * ctx.sphere([0, 0, 0], 3); // Uses default foreground color
 	 * ctx.sphere(vec3(0, 0, 0), 5, "red");
 	 */
-	sphere = (
-		position: Vec3,
-		radius: number,
-		color?: THREE.ColorRepresentation
-	): Sphere => {
+	sphere = (position: Vec3, radius: number, color?: ObjectColor): Sphere => {
 		const pos = toVec3(position);
 		const geometry = new THREE.SphereGeometry(radius);
-		const material = new THREE.MeshBasicMaterial({
-			color: color ?? this.COLOR.FOREGROUND,
-		});
+		const material = toMaterial(color, this.COLOR.FOREGROUND);
 		const mesh = new THREE.Mesh(geometry, material);
 		mesh.position.copy(pos);
 		this.spawn(mesh);
@@ -377,7 +396,7 @@ export class Ctx {
 	 * Creates and adds a cone to the scene.
 	 * @param height Height of the cone from base to tip
 	 * @param radius Radius of the cone base
-	 * @param color (Optional) A Three.js color representation for the cone. Defaults to the context's foreground color.
+	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
 	 * @returns The created THREE.Mesh instance representing the cone. For convenience, this is typed as {@link Cone}.
 	 * @example
 	 * ctx.cone(10, 5); // Uses default foreground color
@@ -387,13 +406,11 @@ export class Ctx {
 		position: Vec3,
 		height: number,
 		radius: number,
-		color?: THREE.ColorRepresentation
+		color?: ObjectColor
 	): Cone => {
 		const pos = toVec3(position);
 		const geometry = new THREE.ConeGeometry(radius, height);
-		const material = new THREE.MeshBasicMaterial({
-			color: color ?? this.COLOR.FOREGROUND,
-		});
+		const material = toMaterial(color, this.COLOR.FOREGROUND);
 		const mesh = new THREE.Mesh(geometry, material);
 		mesh.position.copy(pos);
 		this.spawn(mesh);
@@ -401,6 +418,8 @@ export class Ctx {
 		return mesh;
 	};
 
+	// TODO: Add min/max, so that calculated values that exceed NaN or Infinity can be clamped. Otherwise, length
+	// computation fails
 	/**
 	 * Creates and adds a graph of a mathematical function to the scene.
 	 * @param func The mathematical function to graph.

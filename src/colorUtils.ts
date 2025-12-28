@@ -1,6 +1,44 @@
-import { color } from "./utils.ts";
+import { THREE } from "./index.ts";
 
 export type Theme = "light" | "dark";
+
+/** Type representing an object color, which can be a simple color representation or an object with color and shading information. */
+export type ObjectColor =
+	| THREE.ColorRepresentation
+	| { color?: THREE.ColorRepresentation; shaded?: boolean };
+
+const getObjectColorValue = (
+	value: ObjectColor | null | undefined
+): THREE.ColorRepresentation | null => {
+	if (value === null || value === undefined) return null;
+	if (typeof value === "object" && !(value instanceof THREE.Color)) {
+		return value.color ?? null;
+	}
+	return value;
+};
+
+// TODO: Add own materialUtils file? This could also contain a type for the returned material that we can use in shapes
+export const toMaterial = (
+	value: ObjectColor | null | undefined,
+	fallback: THREE.ColorRepresentation
+) => {
+	const colorValue = getObjectColorValue(value) ?? fallback;
+	const isShaded =
+		value !== null && typeof value === "object" && "shaded" in value
+			? value.shaded
+			: false;
+
+	let material = isShaded
+		? THREE.MeshStandardMaterial
+		: THREE.MeshBasicMaterial;
+
+	return new material({ color: new THREE.Color(colorValue) });
+};
+
+/** Returns a new THREE.Color instance. */
+export const color = (value: THREE.ColorRepresentation) => {
+	return new THREE.Color(value);
+};
 
 export const cssColors = {
 	light: {

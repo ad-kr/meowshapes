@@ -1,11 +1,20 @@
 import { Object3D } from "three";
 import type { THREE, Vec3 } from "./index.ts";
 import { Line2 } from "three/addons/lines/Line2.js";
-import { toVec3, vec3 } from "./utils.ts";
+import { toVec3, vec3 } from "./vecUtils.ts";
 
-export type Text = THREE.Mesh<THREE.ShapeGeometry, THREE.MeshBasicMaterial>;
-export type Sphere = THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
-export type Cone = THREE.Mesh<THREE.ConeGeometry, THREE.MeshBasicMaterial>;
+export type Text = THREE.Mesh<
+	THREE.ShapeGeometry,
+	THREE.MeshBasicMaterial | THREE.MeshStandardMaterial
+>;
+export type Sphere = THREE.Mesh<
+	THREE.SphereGeometry,
+	THREE.MeshBasicMaterial | THREE.MeshStandardMaterial
+>;
+export type Cone = THREE.Mesh<
+	THREE.ConeGeometry,
+	THREE.MeshBasicMaterial | THREE.MeshStandardMaterial
+>;
 
 /**
  *  A container for arrow components, line and cone. Line and cone are supplied in their correct positions, pointing

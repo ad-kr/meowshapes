@@ -1,4 +1,4 @@
-import { cssColors } from "./colors.ts";
+import { cssColors } from "./colorUtils.ts";
 import { Ctx } from "./ctx.ts";
 import { THREE } from "./index.ts";
 

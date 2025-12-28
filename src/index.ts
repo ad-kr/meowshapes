@@ -4,12 +4,12 @@ export {
 	vec2,
 	vec3,
 	vec4,
-	color,
 	DIR,
 	type Vec2,
 	type Vec3,
 	type Vec4,
-} from "./utils.ts";
+} from "./vecUtils.ts";
+export { color } from "./colorUtils.ts";
 export type { Sphere, Text } from "./shapeTypes.ts";
 
 // TODO: Still wondering whether we should re-export THREE or not.

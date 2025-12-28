@@ -12,10 +12,6 @@ export const vec3 = (x: number, y: number, z: number) => {
 export const vec4 = (x: number, y: number, z: number, w: number) => {
 	return new THREE.Vector4(x, y, z, w);
 };
-/** Returns a new THREE.Color instance. */
-export const color = (value: THREE.ColorRepresentation) => {
-	return new THREE.Color(value);
-};
 
 // Type definitions for flexible vector inputs
 export type Vec2 = [number, number] | THREE.Vector2;
