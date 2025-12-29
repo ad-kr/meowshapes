@@ -213,6 +213,7 @@ export class Ctx {
 			0
 		);
 		const material = toMaterial(color, this.COLOR.FOREGROUND);
+		material.side = THREE.DoubleSide;
 		const text = new THREE.Mesh(geometry, material);
 		this.spawn(text);
 		return text;
