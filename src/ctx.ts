@@ -14,6 +14,7 @@ import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { defaultFont } from "./defaultFont.ts";
+import { Slider } from "./domElements.ts";
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
 
@@ -282,6 +283,80 @@ export class Ctx {
 
 		this.wrapperRef.appendChild(button);
 		return button;
+	};
+
+	/**
+	 * Creates a slider element and adds it to the renderer's DOM wrapper.
+	 * @param label The text label of the slider. If null or empty, no label is created.
+	 * @param min The minimum value of the slider.
+	 * @param max The maximum value of the slider.
+	 * @param initial The initial value of the slider. If null, defaults to the midpoint between min and max.
+	 * @param config Configuration options for the slider, such as step size and whether to show the current value.
+	 * @returns A Slider object containing references to the created DOM elements and methods to get/set the slider value.
+	 */
+	slider = (
+		label: string | null,
+		min: number,
+		max: number,
+		initial?: number | null,
+		config?: { step?: number; showValue?: boolean }
+	) => {
+		const container = document.createElement("div");
+		container.classList.add("renderer-slider-container");
+
+		const input = document.createElement("input");
+		input.type = "range";
+		input.min = min.toString();
+		input.max = max.toString();
+
+		const labelContainer = document.createElement("div");
+
+		let labelElement: HTMLLabelElement | null = null;
+		if (label !== null && label !== "") {
+			labelElement = document.createElement("label");
+			labelElement.textContent = label;
+
+			const inputId = `slider-${Math.random().toString(36).substring(2)}`;
+			labelElement.htmlFor = inputId;
+			input.id = inputId;
+
+			labelContainer.appendChild(labelElement);
+		}
+
+		let valueLabel = null;
+		if (config?.showValue ?? false == false) {
+			valueLabel = document.createElement("span");
+			valueLabel.textContent =
+				initial?.toString() ?? ((min + max) / 2).toString();
+			labelContainer.appendChild(valueLabel);
+
+			input.addEventListener("input", () => {
+				valueLabel!.textContent = input.value;
+			});
+		}
+
+		const range = max - min;
+		const step = config?.step ?? range / 10;
+		const value = initial ?? min + range / 2;
+
+		input.step = step.toString();
+		input.value = value.toString();
+
+		if (this.theme === "dark") {
+			input.classList.add("dark");
+		}
+
+		container.appendChild(labelContainer);
+		container.appendChild(input);
+		this.wrapperRef.appendChild(container);
+
+		return new Slider(
+			container,
+			input,
+			labelContainer,
+			labelElement,
+			valueLabel
+		);
 	};
 
 	/**

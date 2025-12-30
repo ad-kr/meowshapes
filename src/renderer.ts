@@ -53,6 +53,56 @@ export class Renderer {
                 .renderer-button.dark:hover {
                     background-color: ${cssColors.dark.muted};
                 }
+                
+                .renderer-slider-container {
+                    display: flex;
+                    flex-direction: column;
+                    
+                    font-family: Geist, sans-serif;
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: ${cssColors.light.foreground};
+
+                    position: absolute;
+                    top: 0;
+
+                    gap: 4px;
+                    margin: 16px;
+                }
+                .renderer-slider-container.dark {
+                    color: ${cssColors.dark.foreground};
+                }
+                .renderer-slider-container > div {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 8px;
+                }
+                .renderer-slider-container > input[type="range"] {
+                    -webkit-appearance: none;
+                    appearance: none;
+
+                    margin: 6px 0;
+
+                    height: 4px;
+                    border-radius: 2px;
+
+                    background: ${cssColors.light.muted};
+                }
+                .renderer-slider-container > input[type="range"].dark {
+                    background: ${cssColors.dark.muted};
+                }
+                .renderer-slider-container > input[type="range"]::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    background: ${cssColors.light.foreground};
+                    cursor: pointer;
+                }
+                .renderer-slider-container > input[type="range"].dark::-webkit-slider-thumb {
+                    background: ${cssColors.dark.foreground};
+                }
             `;
 
 			document.head.appendChild(style);
