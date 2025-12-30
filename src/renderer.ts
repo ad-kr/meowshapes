@@ -88,7 +88,7 @@ export class Renderer {
 
                     background: ${cssColors.light.muted};
                 }
-                .renderer-slider-container > input[type="range"].dark {
+                .renderer-slider-container.dark > input[type="range"] {
                     background: ${cssColors.dark.muted};
                 }
                 .renderer-slider-container > input[type="range"]::-webkit-slider-thumb {
@@ -100,7 +100,7 @@ export class Renderer {
                     background: ${cssColors.light.foreground};
                     cursor: pointer;
                 }
-                .renderer-slider-container > input[type="range"].dark::-webkit-slider-thumb {
+                .renderer-slider-container.dark > input[type="range"]::-webkit-slider-thumb {
                     background: ${cssColors.dark.foreground};
                 }
             `;

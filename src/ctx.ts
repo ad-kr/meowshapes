@@ -304,6 +304,10 @@ export class Ctx {
 		const container = document.createElement("div");
 		container.classList.add("renderer-slider-container");
 
+		if (this.theme === "dark") {
+			container.classList.add("dark");
+		}
+
 		const input = document.createElement("input");
 		input.type = "range";
 		input.min = min.toString();
@@ -341,10 +345,6 @@ export class Ctx {
 
 		input.step = step.toString();
 		input.value = value.toString();
-
-		if (this.theme === "dark") {
-			input.classList.add("dark");
-		}
 
 		container.appendChild(labelContainer);
 		container.appendChild(input);
