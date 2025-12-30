@@ -5,7 +5,7 @@ import {
 	type ObjectColor,
 	type Theme,
 } from "./colorUtils.ts";
-import { THREE, type Sphere } from "./index.ts";
+import { color, THREE, type Sphere } from "./index.ts";
 import { Arrow, type Cone, type Text } from "./shapeTypes.ts";
 import { DIR, toVec2, toVec3, vec3, type Vec2, type Vec3 } from "./vecUtils.ts";
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
@@ -18,19 +18,27 @@ import { Slider } from "./domElements.ts";
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
 
+type LineConfig = {
+	color?: THREE.ColorRepresentation;
+	dashSize?: number;
+	gapSize?: number;
+	lineWidth?: number;
+} & (
+	| {
+			colorStart: THREE.ColorRepresentation;
+			colorEnd: THREE.ColorRepresentation;
+	  }
+	| {}
+);
+
 type LineStyle =
 	| null
 	| undefined
 	| "dashed"
 	| THREE.ColorRepresentation
-	| {
-			color?: THREE.ColorRepresentation;
-			dashSize?: number;
-			gapSize?: number;
-			lineWidth?: number;
-	  };
+	| LineConfig;
 
-const toLineStyle = (style: LineStyle) => {
+const toLineConfig = (style: LineStyle): LineConfig => {
 	if (style === null || style === undefined) return {};
 	if (style === "dashed") return { dashSize: 20, gapSize: 10 };
 	if (typeof style === "object" && !(style instanceof THREE.Color)) {
@@ -386,22 +394,60 @@ export class Ctx {
 	 * ```
 	 * @param points An array of vectors representing the points of the line strip.
 	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
+	 * @param colors (Optional) An array of color representations for each vertex in the line strip. When provided, this overrides the color specified in the style parameter.
 	 * @returns The created THREE.Line instance. For convenience, this is typed as {@link Line}.
 	 */
-	lineStrip = (points: Vec3[], style?: LineStyle): Line2 => {
+	lineStrip = (
+		points: Vec3[],
+		style?: LineStyle,
+		colors?: THREE.ColorRepresentation[]
+	): Line2 => {
 		const vecPoints = points.map(toVec3);
-
 		const geometry = new LineGeometry().setFromPoints(vecPoints);
 
-		const lineStyle = toLineStyle(style);
+		const lineConfig = toLineConfig(style);
 		const dashed =
-			lineStyle.dashSize !== undefined && lineStyle.gapSize !== undefined;
+			lineConfig.dashSize !== undefined &&
+			lineConfig.gapSize !== undefined;
+
+		let vertexColors = undefined;
+		if (colors !== undefined) {
+			vertexColors = new Float32Array(colors.length * 3);
+
+			for (let i = 0; i < colors.length; i++) {
+				const c = color(colors[i]!);
+				vertexColors[i * 3] = c.r;
+				vertexColors[i * 3 + 1] = c.g;
+				vertexColors[i * 3 + 2] = c.b;
+			}
+
+			geometry.setColors(vertexColors);
+		} else if ("colorStart" in lineConfig && "colorEnd" in lineConfig) {
+			vertexColors = new Float32Array(vecPoints.length * 3);
+			const startColor = color(lineConfig.colorStart!);
+			const endColor = color(lineConfig.colorEnd!);
+
+			for (let i = 0; i < vecPoints.length; i++) {
+				const t = i / (vecPoints.length - 1);
+				const c = startColor.clone().lerp(endColor, t);
+				vertexColors[i * 3] = c.r;
+				vertexColors[i * 3 + 1] = c.g;
+				vertexColors[i * 3 + 2] = c.b;
+			}
+
+			geometry.setColors(vertexColors);
+		}
+
 		const material = new LineMaterial({
-			color: lineStyle.color ?? this.COLOR.FOREGROUND,
-			dashSize: lineStyle.dashSize ?? 0,
-			gapSize: lineStyle.gapSize ?? 0,
-			linewidth: lineStyle.lineWidth ?? 2,
+			color:
+				vertexColors === undefined
+					? lineConfig.color ?? this.COLOR.FOREGROUND
+					: undefined,
+			dashSize: lineConfig.dashSize ?? 0,
+			gapSize: lineConfig.gapSize ?? 0,
+			linewidth: lineConfig.lineWidth ?? 2,
 			dashed,
+			vertexColors: vertexColors !== undefined,
 		});
 
 		const line = new Line2(geometry, material);
@@ -430,13 +476,16 @@ export class Ctx {
 		const length = vec.length();
 		const dir = endVec.clone().sub(startVec).normalize();
 
-		const lineStyle = toLineStyle(style);
-		const color = lineStyle.color ?? this.COLOR.FOREGROUND;
+		const lineConfig = toLineConfig(style);
+		const color =
+			"colorEnd" in lineConfig
+				? lineConfig.colorEnd!
+				: lineConfig.color ?? this.COLOR.FOREGROUND;
 
 		const line = this.line(
 			[0, 0, 0],
 			DIR.Y.multiplyScalar(length - 12),
-			lineStyle
+			lineConfig
 		);
 		const cone = this.cone([0, 0, 0], 12, 6, color);
 		cone.geometry.translate(0, length - 6, 0);
@@ -654,13 +703,13 @@ export class Ctx {
 	 * // Graph a quadratic function over the default range
 	 * ctx.graph(x => x * x, { color: "blue", dashSize: 5, gapSize: 2 });
 	 * ```
-	 * @param func The mathematical function to graph.
+	 * @param func The mathematical function to graph. Usually a function of x returning y. In addition, the function can return a tuple of [y, color] to specify per-point colors. When colors are specified, they override the style parameter colors.
 	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
 	 * @param range (Optional) The range [from, to] over which to graph the function.
 	 * @returns The created THREE.Line instance representing the graph. For convenience, this is typed as {@link Line}.
 	 */
 	graph = (
-		func: (x: number) => number,
+		func: (x: number) => number | [number, THREE.ColorRepresentation],
 		style?: LineStyle,
 		range?: [number, number]
 	) => {
@@ -679,13 +728,23 @@ export class Ctx {
 		const resolution = 0.5 / scale;
 		const pointCount = Math.round((to - from) * resolution);
 		const points: Vec3[] = [];
+
+		const colors = [];
 		for (let i = 0; i <= pointCount; i++) {
 			const x = from + (i / pointCount) * (to - from);
-			const y = func(x);
+			const res = func(x);
+			const [y, color] = Array.isArray(res) ? res : [res, null];
+
 			points.push([x, y, 0]);
+
+			if (color !== null) colors.push(color);
 		}
 
-		return this.lineStrip(points, style);
+		return this.lineStrip(
+			points,
+			style,
+			colors.length > 0 ? colors : undefined
+		);
 	};
 
 	/**
