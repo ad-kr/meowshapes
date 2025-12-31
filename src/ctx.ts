@@ -15,6 +15,7 @@ import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { defaultFont } from "./defaultFont.ts";
 import { Slider } from "./domElements.ts";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
 
@@ -107,6 +108,11 @@ export class Ctx {
 	 */
 	private globalLight: THREE.HemisphereLight;
 
+	/**
+	 * Orbit controls for the camera. Initialized when orbit() is first called.
+	 */
+	private orbitControls: OrbitControls | null;
+
 	constructor(scene: THREE.Scene, wrapper: HTMLDivElement) {
 		this.sceneRef = scene;
 		this.wrapperRef = wrapper;
@@ -123,6 +129,8 @@ export class Ctx {
 		this.camera.far = 1000000;
 		this.camera.position.set(-1, 1, 1);
 		this.camera.lookAt(0, 0, 0);
+
+		this.orbitControls = null;
 	}
 
 	/**
@@ -157,6 +165,56 @@ export class Ctx {
 	 */
 	background = (color: THREE.ColorRepresentation) => {
 		this.sceneRef.background = new THREE.Color(color);
+	};
+
+	/**
+	 * Configures orbit controls for the camera.
+	 * ### Example
+	 * ```js
+	 * ctx.orbit(); // Default orbit controls
+	 * ctx.orbit({ target: [0, 0, 0], autoRotate: 1.0 }); // Orbit around the origin with auto-rotation speed of 1.0
+	 * ```
+	 * @param config (Optional) Configuration options for the orbit controls.
+	 */
+	orbit = (config?: {
+		/** The target position for the orbit controls to look at */
+		target?: Vec3;
+		/** The auto-rotate speed. If defined, enables auto-rotation */
+		autoRotate?: number;
+		/** Whether to enable rotation. Default is true. */
+		enabledRotate?: boolean;
+		/** Whether to enable panning. Default is true. */
+		enablePan?: boolean;
+		/** Whether to enable zooming. Default is true. */
+		enableZoom?: boolean;
+	}) => {
+		if (this.orbitControls === null) {
+			this.orbitControls = new OrbitControls(
+				this.camera,
+				this.wrapperRef
+			);
+
+			this.orbitControls.autoRotate = true;
+
+			if (this.mode !== "IMMEDIATE") {
+				this.update(() => {
+					this.orbitControls!.update();
+				});
+			}
+		}
+
+		if (config !== undefined) {
+			if (config.target !== undefined) {
+				this.orbitControls.target.copy(toVec3(config.target));
+			}
+
+			this.orbitControls.autoRotateSpeed = config.autoRotate ?? 0;
+			this.orbitControls.enableRotate = config.enabledRotate ?? true;
+			this.orbitControls.enablePan = config.enablePan ?? true;
+			this.orbitControls.enableZoom = config.enableZoom ?? true;
+		}
+
+		this.orbitControls.update();
 	};
 
 	/**
