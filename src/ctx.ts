@@ -194,8 +194,6 @@ export class Ctx {
 				this.wrapperRef
 			);
 
-			this.orbitControls.autoRotate = true;
-
 			if (this.mode !== "IMMEDIATE") {
 				this.update(() => {
 					this.orbitControls!.update();
@@ -208,6 +206,7 @@ export class Ctx {
 				this.orbitControls.target.copy(toVec3(config.target));
 			}
 
+			this.orbitControls.autoRotate = true;
 			this.orbitControls.autoRotateSpeed = config.autoRotate ?? 0;
 			this.orbitControls.enableRotate = config.enabledRotate ?? true;
 			this.orbitControls.enablePan = config.enablePan ?? true;
