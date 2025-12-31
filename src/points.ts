@@ -23,20 +23,30 @@ export class Points {
 		const vecPoints = points.map(toVec3);
 
 		const geometry = new THREE.BufferGeometry().setFromPoints(vecPoints);
-		const colors = new Float32Array(vecPoints.length * 3);
+
+		const colors = new Float32Array(vecPoints.length * 4);
 
 		for (let i = 0; i < vecPoints.length; i++) {
-			colors[i * 3] = color.r;
-			colors[i * 3 + 1] = color.g;
-			colors[i * 3 + 2] = color.b;
+			colors[i * 4] = color.r;
+			colors[i * 4 + 1] = color.g;
+			colors[i * 4 + 2] = color.b;
+			colors[i * 4 + 3] = 1.0;
 		}
 
 		geometry.setAttribute(
 			"color",
-			new THREE.Float32BufferAttribute(colors, 3)
+			new THREE.Float32BufferAttribute(colors, 4)
 		);
 
-		const material = new THREE.PointsMaterial({ vertexColors: true, size });
+		const material = new THREE.PointsMaterial({
+			vertexColors: true,
+			size,
+			transparent: true,
+			opacity: 1.0,
+			side: THREE.DoubleSide,
+			fog: false,
+			depthWrite: false,
+		});
 		this.innerPoints = new THREE.Points(geometry, material);
 	}
 
@@ -91,10 +101,32 @@ export class Points {
 	 * @param index Index of the point to set the color for.
 	 * @param color New color for the point.
 	 */
-	setColor(index: number, color: THREE.ColorRepresentation) {
+	setColor(index: number, color: THREE.ColorRepresentation, alpha?: number) {
 		const c = col(color);
 		const attr = this.innerPoints.geometry.getAttribute("color");
 		attr.setXYZ(index, c.r, c.g, c.b);
+		if (alpha !== undefined) attr.setW(index, alpha);
+		attr.needsUpdate = true;
+	}
+
+	/**
+	 * Gets the alpha of a specific point.
+	 * @param index Index of the point to get the alpha for.
+	 * @returns Alpha of the specified point.
+	 */
+	getAlpha(index: number) {
+		const attr = this.innerPoints.geometry.getAttribute("color");
+		return attr.getW(index);
+	}
+
+	/**
+	 * Sets the alpha of a specific point.
+	 * @param index Index of the point to set the alpha for.
+	 * @param alpha New alpha for the point.
+	 */
+	setAlpha(index: number, alpha: number) {
+		const attr = this.innerPoints.geometry.getAttribute("color");
+		attr.setW(index, alpha);
 		attr.needsUpdate = true;
 	}
 }
