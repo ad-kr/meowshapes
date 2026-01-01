@@ -352,6 +352,18 @@ export class Ctx {
 
 	/**
 	 * Creates a slider element and adds it to the renderer's DOM wrapper.
+	 * ### Example
+	 * ```js
+	 * const radiusSlider = ctx.slider("Radius", 1, 100);
+	 *
+	 * ctx.update(() => {
+	 *    const radius = radiusSlider.value();
+	 *    ctx.sphere([0, 0, 0], radius);
+	 * });
+	 *
+	 * // Slider with custom step size and initial value
+	 * ctx.slider("Opacity", 0, 1, 0.25, { step: 0.01 });
+	 * ```
 	 * @param label The text label of the slider. If null or empty, no label is created.
 	 * @param min The minimum value of the slider.
 	 * @param max The maximum value of the slider.
