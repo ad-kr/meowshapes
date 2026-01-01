@@ -24,6 +24,10 @@ export class Renderer {
 			const style = document.createElement("style");
 			style.id = stylesId;
 
+			// Some remarks about styling:
+			// - We use margin-top and margin-left on children instead of gap to also add some spcaing from the edges
+			// without having to add padding to the wrapper. This way we can keep canvas and other elements in the same
+			// wrapper.
 			style.innerText = `
                 .renderer-wrapper {
                     position: relative;
@@ -35,13 +39,17 @@ export class Renderer {
                     flex-wrap: wrap;
                     align-items: start;
                     align-content: start;
-                    justify-content: start;
 
                     overflow: hidden;
+                }
+                .renderer-wrapper > * {
+                    margin-top: 16px;
+                    margin-left: 16px;
                 }
                 .renderer-wrapper > canvas {
                     position: absolute;
                     z-index: -1;
+                    margin: 0;
                 }
                 .renderer-button {
                     font-family: Geist, sans-serif;
@@ -54,7 +62,6 @@ export class Renderer {
                     border-radius: 8px;
 
                     padding: 8px 16px;
-                    margin: 8px;
                     cursor: pointer;
                 }
                 .renderer-button:hover {
@@ -78,7 +85,6 @@ export class Renderer {
                     color: ${cssColors.light.foreground};
 
                     gap: 4px;
-                    margin: 8px;
                 }
                 .renderer-slider-container.dark {
                     color: ${cssColors.dark.foreground};
