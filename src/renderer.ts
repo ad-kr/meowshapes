@@ -16,20 +16,34 @@ export class Renderer {
 		this.inner = new THREE.WebGLRenderer({ antialias: true });
 
 		this.wrapper = document.createElement("div");
-		this.wrapper.style.position = "relative";
-		this.wrapper.style.width = "100%";
-		this.wrapper.style.height = "100%";
+		this.wrapper.className = "renderer-wrapper";
 		this.wrapper.appendChild(this.inner.domElement);
 
-		if (document.getElementById("renderer-styles") === null) {
+		const stylesId = "renderer-styles";
+		if (document.getElementById(stylesId) === null) {
 			const style = document.createElement("style");
-			style.id = "renderer-styles";
+			style.id = stylesId;
 
 			style.innerText = `
-                .renderer-button {
+                .renderer-wrapper {
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+
+                    display: flex;
+                    flex-direction: column;
+                    flex-wrap: wrap;
+                    align-items: start;
+                    align-content: start;
+                    justify-content: start;
+
+                    overflow: hidden;
+                }
+                .renderer-wrapper > canvas {
                     position: absolute;
-                    top: 0;
-                    
+                    z-index: -1;
+                }
+                .renderer-button {
                     font-family: Geist, sans-serif;
                     font-size: 14px;
                     font-weight: 500;
@@ -40,7 +54,7 @@ export class Renderer {
                     border-radius: 8px;
 
                     padding: 8px 16px;
-                    margin: 16px;
+                    margin: 8px;
                     cursor: pointer;
                 }
                 .renderer-button:hover {
@@ -63,11 +77,8 @@ export class Renderer {
                     font-weight: 500;
                     color: ${cssColors.light.foreground};
 
-                    position: absolute;
-                    top: 0;
-
                     gap: 4px;
-                    margin: 16px;
+                    margin: 8px;
                 }
                 .renderer-slider-container.dark {
                     color: ${cssColors.dark.foreground};
