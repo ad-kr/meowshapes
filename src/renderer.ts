@@ -120,6 +120,11 @@ export class Renderer {
                 .renderer-slider-container.dark > input[type="range"]::-webkit-slider-thumb {
                     background: ${cssColors.dark.foreground};
                 }
+
+                .renderer-text-element {
+                    font-family: Geist, sans-serif;
+                    font-weight: 500;
+                }
             `;
 
 			document.head.appendChild(style);

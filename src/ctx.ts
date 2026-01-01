@@ -5,7 +5,7 @@ import {
 	type ObjectColor,
 	type Theme,
 } from "./colorUtils.ts";
-import { color, THREE, type Sphere } from "./index.ts";
+import { color as toColor, THREE, type Sphere } from "./index.ts";
 import { Arrow, type Cone, type Text } from "./shapeTypes.ts";
 import { DIR, toVec2, toVec3, vec3, type Vec2, type Vec3 } from "./vecUtils.ts";
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
@@ -437,6 +437,29 @@ export class Ctx {
 	};
 
 	/**
+	 * Creates a text element (span) and adds it to the renderer's DOM wrapper.
+	 * ### Example
+	 * ```js
+	 * ctx.textElement("Hello, World!", 24, "red");
+	 * ```
+	 * @param value The text content of the element.
+	 * @param size The font size of the text element in pixels. Defaults to 16 if not provided.
+	 * @param color The color of the text. Defaults to the context's foreground color if not provided.
+	 */
+	textElement = (
+		value: string,
+		size?: number | null,
+		color?: THREE.ColorRepresentation
+	) => {
+		const span = document.createElement("span");
+		span.classList.add("renderer-text-element");
+		span.style.fontSize = `${size ?? 16}px`;
+		span.style.color = toColor(color ?? this.COLOR.FOREGROUND).getStyle();
+		span.textContent = value;
+		this.wrapperRef.appendChild(span);
+	};
+
+	/**
 	 * Creates and adds a line to the scene.
 	 * ### Example
 	 * ```js
@@ -484,7 +507,7 @@ export class Ctx {
 			vertexColors = new Float32Array(colors.length * 3);
 
 			for (let i = 0; i < colors.length; i++) {
-				const c = color(colors[i]!);
+				const c = toColor(colors[i]!);
 				vertexColors[i * 3] = c.r;
 				vertexColors[i * 3 + 1] = c.g;
 				vertexColors[i * 3 + 2] = c.b;
@@ -493,8 +516,8 @@ export class Ctx {
 			geometry.setColors(vertexColors);
 		} else if ("colorStart" in lineConfig && "colorEnd" in lineConfig) {
 			vertexColors = new Float32Array(vecPoints.length * 3);
-			const startColor = color(lineConfig.colorStart!);
-			const endColor = color(lineConfig.colorEnd!);
+			const startColor = toColor(lineConfig.colorStart!);
+			const endColor = toColor(lineConfig.colorEnd!);
 
 			for (let i = 0; i < vecPoints.length; i++) {
 				const t = i / (vecPoints.length - 1);
