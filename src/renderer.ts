@@ -125,6 +125,34 @@ export class Renderer {
                     font-family: Geist, sans-serif;
                     font-weight: 500;
                 }
+
+                .renderer-checkbox-container {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    
+                    font-family: Geist, sans-serif;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: ${cssColors.light.foreground};
+                }
+                .renderer-checkbox-container.dark {
+                    color: ${cssColors.dark.foreground};
+                }
+                .renderer-checkbox-container > input[type="checkbox"] {
+                    width: 16px;
+                    height: 16px;
+                    cursor: pointer;
+                }
+                .renderer-checkbox-container > input[type="checkbox"]::checked {
+                    background-color: ${cssColors.light.foreground};
+                }
+                .renderer-checkbox-container.dark > input[type="checkbox"]::checked {
+                    background-color: ${cssColors.dark.foreground};
+                }
+                .renderer-checkbox-container > label {
+                    cursor: pointer;
+                }
             `;
 
 			document.head.appendChild(style);

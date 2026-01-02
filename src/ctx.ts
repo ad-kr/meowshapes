@@ -14,7 +14,7 @@ import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { defaultFont } from "./defaultFont.ts";
-import { Slider } from "./domElements.ts";
+import { Checkbox, Slider } from "./domElements.ts";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
@@ -460,6 +460,42 @@ export class Ctx {
 		span.style.color = toColor(color ?? this.COLOR.FOREGROUND).getStyle();
 		span.textContent = value;
 		this.wrapperRef.appendChild(span);
+	};
+
+	checkbox = (
+		label: string | null,
+		onToggle: (isChecked: boolean) => void,
+		initial?: boolean
+	) => {
+		const container = document.createElement("div");
+		container.classList.add("renderer-checkbox-container");
+		if (this.theme === "dark") {
+			container.classList.add("dark");
+		}
+
+		const input = document.createElement("input");
+		input.type = "checkbox";
+		input.checked = initial ?? false;
+
+		input.addEventListener("change", () => onToggle(input.checked));
+
+		container.appendChild(input);
+
+		let labelElement: HTMLLabelElement | null = null;
+		if (label !== null && label !== "") {
+			labelElement = document.createElement("label");
+			labelElement.textContent = label;
+			const inputId = `checkbox-${Math.random()
+				.toString(36)
+				.substring(2)}`;
+			labelElement.htmlFor = inputId;
+			input.id = inputId;
+			container.appendChild(labelElement);
+		}
+
+		this.wrapperRef.appendChild(container);
+
+		return new Checkbox(container, input, labelElement);
 	};
 
 	/**

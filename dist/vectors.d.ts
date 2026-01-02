@@ -16243,6 +16243,19 @@ declare class Slider {
 	/** Sets the value of the slider */
 	setValue: (value: number) => void;
 }
+declare class Checkbox {
+	/** The container that contains the label and the input checkbox */
+	container: HTMLDivElement;
+	/** The input checkbox element */
+	checkbox: HTMLInputElement;
+	/** The label element for the checkbox */
+	label: HTMLLabelElement | null;
+	constructor(container: HTMLDivElement, checkbox: HTMLInputElement, label: HTMLLabelElement | null);
+	/** Returns whether the checkbox is checked */
+	value: () => boolean;
+	/** Sets the checked state of the checkbox */
+	setValue: (value: boolean) => void;
+}
 export type UpdateFn = (dt: number, elapsed: number) => void;
 export type LineConfig<Extra extends object = {}> = {
 	color?: THREE.ColorRepresentation;
@@ -16468,6 +16481,7 @@ export declare class Ctx {
 	 * @param color The color of the text. Defaults to the context's foreground color if not provided.
 	 */
 	textElement: (value: string, size?: number | null, color?: THREE.ColorRepresentation) => void;
+	checkbox: (label: string | null, onToggle: (isChecked: boolean) => void, initial?: boolean) => Checkbox;
 	/**
 	 * Creates and adds a line to the scene.
 	 * ### Example
