@@ -462,10 +462,32 @@ export class Ctx {
 		this.wrapperRef.appendChild(span);
 	};
 
+	/**
+	 * Creates a checkbox element and adds it to the renderer's DOM wrapper.
+	 * ### Example
+	 * ```js
+	 * const checkbox = ctx.checkbox("Enable Feature");
+	 *
+	 * ctx.update(() => {
+	 *    if (checkbox.value()) {
+	 *       // Feature is enabled
+	 *    }
+	 * });
+	 *
+	 * // Usage with callback:
+	 * ctx.checkbox("Show Grid", true, (isChecked) => {
+	 *    console.log("Checkbox is now:", isChecked);
+	 * });
+	 * ```
+	 * @param label The text label of the checkbox.
+	 * @param initial The initial checked state of the checkbox. Defaults to false.
+	 * @param onToggle The callback function to be executed when the checkbox state changes.
+	 * @returns A Checkbox object containing references to the created DOM elements and methods to get/set the checkbox state.
+	 */
 	checkbox = (
 		label: string | null,
-		onToggle: (isChecked: boolean) => void,
-		initial?: boolean
+		initial?: boolean,
+		onToggle?: (isChecked: boolean) => void
 	) => {
 		const container = document.createElement("div");
 		container.classList.add("renderer-checkbox-container");
@@ -477,7 +499,9 @@ export class Ctx {
 		input.type = "checkbox";
 		input.checked = initial ?? false;
 
-		input.addEventListener("change", () => onToggle(input.checked));
+		if (onToggle !== undefined) {
+			input.addEventListener("change", () => onToggle(input.checked));
+		}
 
 		container.appendChild(input);
 
