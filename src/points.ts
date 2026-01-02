@@ -45,7 +45,6 @@ export class Points {
 			opacity: 1.0,
 			side: THREE.DoubleSide,
 			fog: false,
-			depthWrite: false,
 		});
 		this.innerPoints = new THREE.Points(geometry, material);
 	}
@@ -105,7 +104,7 @@ export class Points {
 		const c = col(color);
 		const attr = this.innerPoints.geometry.getAttribute("color");
 		attr.setXYZ(index, c.r, c.g, c.b);
-		if (alpha !== undefined) attr.setW(index, alpha);
+		if (alpha !== undefined) this.setAlpha(index, alpha);
 		attr.needsUpdate = true;
 	}
 
@@ -127,6 +126,7 @@ export class Points {
 	setAlpha(index: number, alpha: number) {
 		const attr = this.innerPoints.geometry.getAttribute("color");
 		attr.setW(index, alpha);
+		if (alpha < 1.0) this.innerPoints.material.depthWrite = false;
 		attr.needsUpdate = true;
 	}
 }
