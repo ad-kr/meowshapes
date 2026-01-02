@@ -9,6 +9,7 @@ export {
 	type Vec3,
 	type Vec4,
 } from "./vecUtils.ts";
+export { noise, fbm } from "./rng.ts";
 export { color } from "./colorUtils.ts";
 export type { Sphere, Text } from "./shapeTypes.ts";
 
