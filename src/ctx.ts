@@ -19,7 +19,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
 
-type LineConfig = {
+type LineConfig<Extra extends object = {}> = {
 	color?: THREE.ColorRepresentation;
 	dashSize?: number;
 	gapSize?: number;
@@ -30,14 +30,15 @@ type LineConfig = {
 			colorEnd: THREE.ColorRepresentation;
 	  }
 	| {}
-);
+) &
+	Extra;
 
-type LineStyle =
+type LineStyle<Extra extends object = {}> =
 	| null
 	| undefined
 	| "dashed"
 	| THREE.ColorRepresentation
-	| LineConfig;
+	| LineConfig<Extra>;
 
 const toLineConfig = (style: LineStyle): LineConfig => {
 	if (style === null || style === undefined) return {};
@@ -47,6 +48,8 @@ const toLineConfig = (style: LineStyle): LineConfig => {
 	}
 	return { color: style };
 };
+
+type ArrowLineStyle = LineStyle<{ headLength?: number | "auto" }>;
 
 export class Ctx {
 	/**
@@ -560,7 +563,11 @@ export class Ctx {
 	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
 	 * @returns The created THREE.ArrowHelper instance.
 	 */
-	arrow = (start: Vec3, end: Vec3, style?: LineStyle) => {
+	arrow = <Style extends LineStyle>(
+		start: Vec3,
+		end: Vec3,
+		style?: ArrowLineStyle
+	) => {
 		const startVec = toVec3(start);
 		const endVec = toVec3(end);
 
@@ -574,13 +581,23 @@ export class Ctx {
 				? lineConfig.colorEnd!
 				: lineConfig.color ?? this.COLOR.FOREGROUND;
 
+		const { x: scaleX, y: scaleY, z: scaleZ } = this.camera.scale;
+		const scale = Math.min(scaleX, scaleY, scaleZ);
+
+		const headLengthConfig =
+			style && typeof style === "object" && "headLength" in style
+				? style.headLength
+				: "auto";
+		const headLength =
+			headLengthConfig === "auto" ? 12 * scale : headLengthConfig;
+		const cone = this.cone([0, 0, 0], headLength, headLength * 0.5, color);
+		cone.geometry.translate(0, length - headLength, 0);
+
 		const line = this.line(
 			[0, 0, 0],
-			DIR.Y.multiplyScalar(length - 12),
+			DIR.Y.multiplyScalar(length - headLength),
 			lineConfig
 		);
-		const cone = this.cone([0, 0, 0], 12, 6, color);
-		cone.geometry.translate(0, length - 6, 0);
 
 		const arrow = new Arrow(startVec, dir, line, cone);
 		this.spawn(arrow);
@@ -599,7 +616,7 @@ export class Ctx {
 	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
 	 * @returns The created THREE.ArrowHelper instance.
 	 */
-	vector = (vec: Vec3, style?: LineStyle) => {
+	vector = (vec: Vec3, style?: ArrowLineStyle) => {
 		return this.arrow(vec3(0, 0, 0), vec, style);
 	};
 
