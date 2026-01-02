@@ -6,6 +6,9 @@
     "author": "",
     "type": "module",
     "main": "src/index.ts",
+    "scripts": {
+        "build": "npx dts-bundle-generator --no-check --external-inlines=@types/three --out-file dist/vectors.d.ts ./src/index.ts && npx esbuild src/index.ts --bundle --format=iife --minify --global-name=Runner --outfile=dist/vectors.min.js"
+    },
     "dependencies": {
         "three": "^0.182.0",
         "typescript": "^5.9.3"
@@ -13,7 +16,9 @@
     "exports": {
         ".": {
             "import": "./src/index.ts"
-        }
+        },
+        "./dist/vectors.d.ts": "./dist/vectors.d.ts",
+        "./dist/vectors.min.js": "./dist/vectors.min.js"
     },
     "devDependencies": {
         "@types/three": "^0.182.0"
