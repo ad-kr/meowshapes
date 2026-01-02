@@ -16481,7 +16481,29 @@ export declare class Ctx {
 	 * @param color The color of the text. Defaults to the context's foreground color if not provided.
 	 */
 	textElement: (value: string, size?: number | null, color?: THREE.ColorRepresentation) => void;
-	checkbox: (label: string | null, onToggle: (isChecked: boolean) => void, initial?: boolean) => Checkbox;
+	/**
+	 * Creates a checkbox element and adds it to the renderer's DOM wrapper.
+	 * ### Example
+	 * ```js
+	 * const checkbox = ctx.checkbox("Enable Feature");
+	 *
+	 * ctx.update(() => {
+	 *    if (checkbox.value()) {
+	 *       // Feature is enabled
+	 *    }
+	 * });
+	 *
+	 * // Usage with callback:
+	 * ctx.checkbox("Show Grid", true, (isChecked) => {
+	 *    console.log("Checkbox is now:", isChecked);
+	 * });
+	 * ```
+	 * @param label The text label of the checkbox.
+	 * @param initial The initial checked state of the checkbox. Defaults to false.
+	 * @param onToggle The callback function to be executed when the checkbox state changes.
+	 * @returns A Checkbox object containing references to the created DOM elements and methods to get/set the checkbox state.
+	 */
+	checkbox: (label: string | null, initial?: boolean, onToggle?: (isChecked: boolean) => void) => Checkbox;
 	/**
 	 * Creates and adds a line to the scene.
 	 * ### Example
