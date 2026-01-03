@@ -19,7 +19,8 @@ export const noise = (pos: number | Vec2 | Vec3, seed?: string) => {
 	const simplex =
 		seed === undefined
 			? randomSimplex
-			: new SimplexNoise(new SeededRandom(seed));
+			: // TODO: This produces really squarish patterns hmmmm: SeededRandom is not reandom enough i guess
+			  new SimplexNoise(new SeededRandom(seed));
 	return simplex.noise3d(posVec.x, posVec.y, posVec.z);
 };
 
