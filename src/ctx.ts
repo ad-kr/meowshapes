@@ -2,12 +2,27 @@ import {
 	darkColors,
 	lightColors,
 	toMaterial,
+	color as toColor,
 	type ObjectColor,
 	type Theme,
 } from "./colorUtils.ts";
-import { color as toColor, THREE, type Sphere } from "./index.ts";
-import { Arrow, Points, type Cone, type Text } from "./objectHelpers.ts";
-import { DIR, toVec2, toVec3, vec3, type Vec2, type Vec3 } from "./vecUtils.ts";
+import { THREE, type Sphere } from "./index.ts";
+import {
+	Arrow,
+	HeightField,
+	Points,
+	type Cone,
+	type Text,
+} from "./objectHelpers.ts";
+import {
+	DIR,
+	toVec2,
+	toVec3,
+	vec2,
+	vec3,
+	type Vec2,
+	type Vec3,
+} from "./vecUtils.ts";
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { Line2 } from "three/addons/lines/Line2.js";
@@ -986,6 +1001,145 @@ export class Ctx {
 		this.spawn(pointCloud.mesh);
 		return pointCloud;
 	};
+
+	/**
+	 * Creates and adds a height field to the scene.
+	 * ### Example
+	 * ```js
+	 * // Flat height field
+	 * ctx.heightField(100, 10);
+	 *
+	 * // Height field with random heights
+	 * const heights = new Array(100).fill(0).map(() => Math.random() * 10);
+	 * ctx.heightField(100, 9, heights);
+	 *
+	 * // Height field with heights defined by a function
+	 * ctx.heightField(100, 9, (pos) => Math.sin(pos.x) * 10);
+	 *
+	 * // Height field with per-vertex colors
+	 * ctx.heightField(100, 1, null, ["blue", "red", "green", "yellow"]);
+	 *
+	 * // Height field with heights and colors defined by functions
+	 * ctx.heightField(
+	 *     100,
+	 *     400,
+	 *     (pos) => Math.sin(pos.length() * 0.05) * 10,
+	 *     (pos) => (Math.sin(pos.length() * 0.5) > 0 ? "crimson" : "darkblue")
+	 * );
+	 * ```
+	 * @param size The size of the height field.
+	 * @param segments The number of segments in the height field.
+	 * @param heights An array of heights or a function that returns a height given a position.
+	 * @param color A color, array of colors, or a function that returns a color given a position.
+	 * @returns The created HeightField instance.
+	 */
+	heightField = (
+		size: number,
+		segments: number,
+		heights?: number[] | ((pos: THREE.Vector2) => number) | null,
+		color?:
+			| THREE.ColorRepresentation
+			| THREE.ColorRepresentation[]
+			| ((pos: THREE.Vector2) => THREE.ColorRepresentation)
+	): HeightField => {
+		const calculatedHeights = this.calculateHeightFieldHeights(
+			heights,
+			segments,
+			size
+		);
+		const colors = this.calculateHeightFieldColors(color, segments, size);
+
+		const heightField = new HeightField(size, calculatedHeights, colors);
+		this.spawn(heightField.mesh);
+		return heightField;
+	};
+
+	/**
+	 * Calculates the heights for a height field based on the provided height definition.
+	 */
+	private calculateHeightFieldHeights(
+		heightDefinition:
+			| number[]
+			| ((pos: THREE.Vector2) => number)
+			| null
+			| undefined,
+		segments: number,
+		size: number
+	) {
+		const s = segments + 1;
+
+		if (Array.isArray(heightDefinition)) {
+			if (heightDefinition.length !== s * s) {
+				throw new Error(
+					`Height array length (${
+						heightDefinition.length
+					}) does not match height field vertex count (${s * s})`
+				);
+			}
+			return heightDefinition;
+		}
+
+		const heights: number[] = new Array(s * s);
+
+		if (heightDefinition === null || heightDefinition === undefined) {
+			heights.fill(0);
+			return heights;
+		}
+
+		for (let i = 0; i < s * s; i++) {
+			const x = ((i % s) / segments) * size;
+			const y = (Math.floor(i / s) / segments) * size;
+			heights[i] = heightDefinition(vec2(x, y));
+		}
+
+		return heights;
+	}
+
+	/**
+	 * Calculates the colors for a height field based on the provided color definition.
+	 */
+	private calculateHeightFieldColors(
+		colorDefinition:
+			| THREE.ColorRepresentation
+			| THREE.ColorRepresentation[]
+			| ((pos: THREE.Vector2) => THREE.ColorRepresentation)
+			| undefined,
+		segments: number,
+		size: number
+	) {
+		const s = segments + 1;
+
+		if (Array.isArray(colorDefinition)) {
+			if (colorDefinition.length !== s * s) {
+				throw new Error(
+					`Color array length (${
+						colorDefinition.length
+					}) does not match height field vertex count (${s * s})`
+				);
+			}
+			return colorDefinition.map(toColor);
+		}
+
+		const colors: THREE.Color[] = new Array(s * s);
+
+		if (typeof colorDefinition === "function") {
+			for (let i = 0; i < s * s; i++) {
+				const x = ((i % s) / segments) * size;
+				const y = (Math.floor(i / s) / segments) * size;
+				const c = colorDefinition(vec2(x, y));
+				colors[i] = toColor(c);
+			}
+			return colors;
+		}
+
+		const c =
+			colorDefinition === undefined
+				? this.COLOR.FOREGROUND
+				: toColor(colorDefinition);
+		colors.fill(c);
+
+		return colors;
+	}
 
 	/**
 	 * Spawns a Three.js object into the scene. In IMMEDIATE mode, the object will be removed at the beginning of the

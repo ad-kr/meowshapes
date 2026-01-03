@@ -16148,41 +16148,14 @@ declare class Arrow extends Object3D {
 	cone: Cone;
 	constructor(pos: Vec3, dir: Vec3, line: Line2, cone: Cone);
 }
-/** Returns a new THREE.Vector2 instance. */
-export declare const vec2: (x: number, y: number) => Vector2;
-/** Returns a new THREE.Vector3 instance. */
-export declare const vec3: (x: number, y: number, z: number) => Vector3;
-/** Returns a new THREE.Vector4 instance. */
-export declare const vec4: (x: number, y: number, z: number, w: number) => Vector4;
-export type Vec2 = number | [
-	number,
-	number
-] | Vector2;
-export type Vec3 = [
-	number,
-	number,
-	number
-] | Vector3 | Vec2;
-export type Vec4 = [
-	number,
-	number,
-	number,
-	number
-] | Vector4 | Vec3;
-/** Common direction vectors. */
-export declare const DIR: {
-	readonly Y: Vector3;
-	readonly NEG_Y: Vector3;
-	readonly X: Vector3;
-	readonly NEG_X: Vector3;
-	readonly Z: Vector3;
-	readonly NEG_Z: Vector3;
-};
+/**
+ * Helper class for working with point clouds.
+ */
 declare class Points$1 {
 	/**
-	 * The inner THREE.Points object.
+	 * The inner THREE.Points mesh object.
 	 */
-	innerPoints: THREE.Points<THREE.BufferGeometry<THREE.NormalBufferAttributes, THREE.BufferGeometryEventMap>, THREE.PointsMaterial, THREE.Object3DEventMap>;
+	mesh: THREE.Points<THREE.BufferGeometry<THREE.NormalBufferAttributes, THREE.BufferGeometryEventMap>, THREE.PointsMaterial, THREE.Object3DEventMap>;
 	constructor(points: Vec3[], size: number, color: THREE.Color);
 	/**
 	 * Gets the number of points in the point cloud.
@@ -16226,6 +16199,72 @@ declare class Points$1 {
 	 */
 	setAlpha(index: number, alpha: number): void;
 }
+declare class HeightField {
+	/**
+	 * The inner THREE.Mesh object.
+	 */
+	mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial, THREE.Object3DEventMap>;
+	constructor(size: number, heights: number[], colors: THREE.Color[]);
+	/**
+	 * Gets the number of vertices in the height field.
+	 * @returns Number of vertices.
+	 */
+	get count(): number;
+	/**
+	 * Gets the height of a specific vertex.
+	 * @param index Index of the vertex to get the height for.
+	 * @returns Height of the specified vertex.
+	 */
+	getHeight(index: number): number;
+	/**
+	 * Sets the height of a specific vertex.
+	 * @param index Index of the vertex to set the height for.
+	 * @param height New height for the vertex.
+	 */
+	setHeight(index: number, height: number): void;
+	/**
+	 * Gets the color of a specific vertex.
+	 * @param index Index of the vertex to get the color for.
+	 * @returns Color of the specified vertex.
+	 */
+	getColor(index: number): THREE.Color;
+	/**
+	 * Sets the color of a specific vertex.
+	 * @param index Index of the vertex to set the color for.
+	 * @param color New color for the vertex.
+	 */
+	setColor(index: number, color: THREE.ColorRepresentation): void;
+}
+/** Returns a new THREE.Vector2 instance. */
+export declare const vec2: (x: number, y: number) => Vector2;
+/** Returns a new THREE.Vector3 instance. */
+export declare const vec3: (x: number, y: number, z: number) => Vector3;
+/** Returns a new THREE.Vector4 instance. */
+export declare const vec4: (x: number, y: number, z: number, w: number) => Vector4;
+export type Vec2 = number | [
+	number,
+	number
+] | Vector2;
+export type Vec3 = [
+	number,
+	number,
+	number
+] | Vector3 | Vec2;
+export type Vec4 = [
+	number,
+	number,
+	number,
+	number
+] | Vector4 | Vec3;
+/** Common direction vectors. */
+export declare const DIR: {
+	readonly Y: Vector3;
+	readonly NEG_Y: Vector3;
+	readonly X: Vector3;
+	readonly NEG_X: Vector3;
+	readonly Z: Vector3;
+	readonly NEG_Z: Vector3;
+};
 declare class Slider {
 	/** The container that contains the label and the input slider */
 	container: HTMLDivElement;
@@ -16709,6 +16748,46 @@ export declare class Ctx {
 	 */
 	points: (points: Vec3[], size?: number | null, color?: THREE.ColorRepresentation) => Points$1;
 	/**
+	 * Creates and adds a height field to the scene.
+	 * ### Example
+	 * ```js
+	 * // Flat height field
+	 * ctx.heightField(100, 10);
+	 *
+	 * // Height field with random heights
+	 * const heights = new Array(100).fill(0).map(() => Math.random() * 10);
+	 * ctx.heightField(100, 9, heights);
+	 *
+	 * // Height field with heights defined by a function
+	 * ctx.heightField(100, 9, (pos) => Math.sin(pos.x) * 10);
+	 *
+	 * // Height field with per-vertex colors
+	 * ctx.heightField(100, 1, null, ["blue", "red", "green", "yellow"]);
+	 *
+	 * // Height field with heights and colors defined by functions
+	 * ctx.heightField(
+	 *     100,
+	 *     400,
+	 *     (pos) => Math.sin(pos.length() * 0.05) * 10,
+	 *     (pos) => (Math.sin(pos.length() * 0.5) > 0 ? "crimson" : "darkblue")
+	 * );
+	 * ```
+	 * @param size The size of the height field.
+	 * @param segments The number of segments in the height field.
+	 * @param heights An array of heights or a function that returns a height given a position.
+	 * @param color A color, array of colors, or a function that returns a color given a position.
+	 * @returns The created HeightField instance.
+	 */
+	heightField: (size: number, segments: number, heights?: number[] | ((pos: THREE.Vector2) => number) | null, color?: THREE.ColorRepresentation | THREE.ColorRepresentation[] | ((pos: THREE.Vector2) => THREE.ColorRepresentation)) => HeightField;
+	/**
+	 * Calculates the heights for a height field based on the provided height definition.
+	 */
+	private calculateHeightFieldHeights;
+	/**
+	 * Calculates the colors for a height field based on the provided color definition.
+	 */
+	private calculateHeightFieldColors;
+	/**
 	 * Spawns a Three.js object into the scene. In IMMEDIATE mode, the object will be removed at the beginning of the
 	 * next frame unless re-added in the next update call. See {@link mode} for more details.
 	 * @param object A Three.js object
@@ -16806,6 +16885,7 @@ declare namespace THREE {
 }
 
 export {
+	Points$1 as Points,
 	Sphere$1 as Sphere,
 	THREE,
 	Text$1 as Text,

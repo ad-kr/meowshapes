@@ -2,7 +2,7 @@ import { Object3D } from "three";
 import { THREE, type Vec3 } from "./index.ts";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { color as col } from "./colorUtils.ts";
-import { toVec3, vec3 } from "./vecUtils.ts";
+import { toVec3, vec3, type Vec2 } from "./vecUtils.ts";
 
 export type Text = THREE.Mesh<
 	THREE.ShapeGeometry,
@@ -104,6 +104,7 @@ export class Points {
 			side: THREE.DoubleSide,
 			fog: false,
 		});
+
 		this.mesh = new THREE.Points(geometry, material);
 	}
 
@@ -185,6 +186,114 @@ export class Points {
 		const attr = this.mesh.geometry.getAttribute("color");
 		attr.setW(index, alpha);
 		if (alpha < 1.0) this.mesh.material.depthWrite = false;
+		attr.needsUpdate = true;
+	}
+}
+
+/**
+ * Helper class for working with height fields.
+ */
+export class HeightField {
+	/**
+	 * The inner THREE.Mesh object.
+	 */
+	mesh: THREE.Mesh<
+		THREE.PlaneGeometry,
+		THREE.MeshStandardMaterial,
+		THREE.Object3DEventMap
+	>;
+
+	constructor(size: number, heights: number[], colors: THREE.Color[]) {
+		const segments = Math.floor(Math.sqrt(heights.length)) - 1;
+
+		const geometry = new THREE.PlaneGeometry(
+			size,
+			size,
+			segments,
+			segments
+		);
+		geometry.rotateX(-Math.PI / 2);
+
+		const posAttr = geometry.getAttribute("position");
+
+		const colorArray = new Float32Array(posAttr.count * 3);
+
+		for (let i = 0; i < posAttr.count; i++) {
+			const height = heights[i]!;
+
+			posAttr.setY(i, height);
+
+			const c = colors[i]!;
+
+			colorArray[i * 3] = c.r;
+			colorArray[i * 3 + 1] = c.g;
+			colorArray[i * 3 + 2] = c.b;
+		}
+
+		geometry.setAttribute(
+			"color",
+			new THREE.Float32BufferAttribute(colorArray, 3)
+		);
+
+		const material = new THREE.MeshStandardMaterial({
+			vertexColors: true,
+			side: THREE.DoubleSide,
+		});
+
+		this.mesh = new THREE.Mesh(geometry, material);
+	}
+
+	/**
+	 * Gets the number of vertices in the height field.
+	 * @returns Number of vertices.
+	 */
+	get count() {
+		return this.mesh.geometry.getAttribute("position").count;
+	}
+
+	/**
+	 * Gets the height of a specific vertex.
+	 * @param index Index of the vertex to get the height for.
+	 * @returns Height of the specified vertex.
+	 */
+	getHeight(index: number) {
+		const attr = this.mesh.geometry.getAttribute("position");
+		return attr.getY(index);
+	}
+
+	/**
+	 * Sets the height of a specific vertex.
+	 * @param index Index of the vertex to set the height for.
+	 * @param height New height for the vertex.
+	 */
+	setHeight(index: number, height: number) {
+		const attr = this.mesh.geometry.getAttribute("position");
+		attr.setY(index, height);
+		attr.needsUpdate = true;
+	}
+
+	/**
+	 * Gets the color of a specific vertex.
+	 * @param index Index of the vertex to get the color for.
+	 * @returns Color of the specified vertex.
+	 */
+	getColor(index: number) {
+		const attr = this.mesh.geometry.getAttribute("color");
+		const r = attr.getX(index);
+		const g = attr.getY(index);
+		const b = attr.getZ(index);
+		return new THREE.Color(r, g, b);
+	}
+
+	/**
+	 * Sets the color of a specific vertex.
+	 * @param index Index of the vertex to set the color for.
+	 * @param color New color for the vertex.
+	 */
+	setColor(index: number, color: THREE.ColorRepresentation) {
+		const c = col(color);
+		const attr = this.mesh.geometry.getAttribute("color");
+		attr.setXYZ(index, c.r, c.g, c.b);
 		attr.needsUpdate = true;
 	}
 }
