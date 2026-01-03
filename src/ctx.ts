@@ -6,10 +6,9 @@ import {
 	type Theme,
 } from "./colorUtils.ts";
 import { color as toColor, THREE, type Sphere } from "./index.ts";
-import { Arrow, type Cone, type Text } from "./shapeTypes.ts";
+import { Arrow, Points, type Cone, type Text } from "./objectHelpers.ts";
 import { DIR, toVec2, toVec3, vec3, type Vec2, type Vec3 } from "./vecUtils.ts";
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
-import { Points } from "./points.ts";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
@@ -984,7 +983,7 @@ export class Ctx {
 			size ?? 2,
 			new THREE.Color(color ?? this.COLOR.FOREGROUND)
 		);
-		this.spawn(pointCloud.innerPoints);
+		this.spawn(pointCloud.mesh);
 		return pointCloud;
 	};
 
