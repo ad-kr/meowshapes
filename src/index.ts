@@ -11,7 +11,14 @@ export {
 } from "./vecUtils.ts";
 export { noise, fbm } from "./rng.ts";
 export { color } from "./colorUtils.ts";
-export { type Sphere, type Text, Points } from "./objectHelpers.ts";
+export {
+	type Sphere,
+	type Text,
+	type Cone,
+	Arrow,
+	Points,
+	HeightField,
+} from "./objectHelpers.ts";
 
 // TODO: Still wondering whether we should re-export THREE or not.
 export * as THREE from "three";
