@@ -297,3 +297,26 @@ export class HeightField {
 		attr.needsUpdate = true;
 	}
 }
+
+/**
+ * An object that holds all the components of a 3D graph, including the graph itself as well as grid lines.
+ */
+export class Graph3d extends Object3D {
+	/** The height field mesh representing the 3D graph. */
+	heightField: HeightField;
+
+	/** The grid lines on the XZ plane. */
+	gridLines: Line2[];
+
+	constructor(heightField: HeightField, gridLines: Line2[]) {
+		super();
+		this.heightField = heightField;
+		this.gridLines = gridLines;
+
+		this.add(this.heightField.mesh);
+
+		for (const line of this.gridLines) {
+			this.add(line);
+		}
+	}
+}

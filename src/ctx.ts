@@ -9,6 +9,7 @@ import {
 import { THREE, type Sphere } from "./index.ts";
 import {
 	Arrow,
+	Graph3d,
 	HeightField,
 	Points,
 	type Cone,
@@ -934,16 +935,35 @@ export class Ctx {
 	 * Creates and adds a 3D graph of a mathematical function to the scene. X and Z are the input axes, Y is the output axis.
 	 * ### Example
 	 * ```js
+	 * // Graphing a 3D sine-cosine surface over a square with width and depth of Math.PI
 	 * ctx.graph3d(
 	 *     (x, z) => Math.sin(x) * Math.cos(z),
 	 *     "red",
 	 *     Math.PI
 	 * );
+	 *
+	 * // Graphing with per-vertex colors
+	 * ctx.graph3d((x, z) => {
+	 *     const value = x * x + z * z;
+	 *     return [value * 0.25, ctx.COLOR.heatmap(value)]
+	 * });
+	 *
+	 * // Graphing with a grid overlay
+	 * ctx.graph3d(
+	 *     (x, z) => z * z - x * x,
+	 *     null,
+	 *     null,
+	 *     {
+	 *         subdivisions: 10,
+	 *         lineStyle: "dashed"
+	 *     }
+	 * );
 	 * ```
 	 * @param func The mathematical function to graph. A function of (x, z) returning y or [y, color]. When returning a tuple, the color is used as the per-vertex color.
 	 * @param color (Optional) Base color of the height field. See {@link THREE.ColorRepresentation} for details. Ignored if the function returns per-vertex colors.
 	 * @param span (Optional) Width and depth of the graph area. Defaults to 200 units scaled by the camera scale.
-	 * @returns The created height field mesh.
+	 * @param grid (Optional) Whether to draw a grid overlay on the height field. Can be a boolean or an object specifying subdivisions and lineStyle. Defaults to false
+	 * @returns The created {@link Graph3d} instance.
 	 */
 	graph3d = (
 		func: (
@@ -951,14 +971,20 @@ export class Ctx {
 			z: number
 		) => number | [number, THREE.ColorRepresentation],
 		color?: THREE.ColorRepresentation | null,
-		span?: number
+		span?: number | null,
+		grid?:
+			| boolean
+			| {
+					subdivisions?: number;
+					lineStyle?: LineStyle;
+			  }
 	) => {
 		const { x: scaleX, y: scaleY, z: scaleZ } = this.camera.scale;
 		const scale = Math.min(scaleX, scaleY, scaleZ);
 
 		const size = span ?? 200 * scale;
 		const from = -size * 0.5;
-		const resolution = 0.05 / scale;
+		const resolution = 0.1 / scale;
 
 		const pointCountPerAxis = Math.round(size * resolution);
 		const segments = pointCountPerAxis - 1;
@@ -970,10 +996,58 @@ export class Ctx {
 
 		const colorFunc = (pos: THREE.Vector2) => {
 			const res = func(pos.x + from, pos.y + from);
-			return Array.isArray(res) ? res[1] : color ?? this.COLOR.FOREGROUND;
+			return Array.isArray(res) ? res[1] : color ?? "red";
 		};
 
-		return this.heightField(size, segments, heightFunc, colorFunc);
+		const lines = [];
+
+		if (!!grid) {
+			const subdivisions =
+				typeof grid === "object" ? grid.subdivisions ?? 10 : 10;
+			const lineStyle =
+				typeof grid === "object" ? grid.lineStyle : undefined;
+			const lineConfig = toLineConfig(lineStyle);
+
+			lineConfig.lineWidth = lineConfig.lineWidth ?? 1;
+
+			const yOffset = 1 * scale;
+
+			for (let i = 0; i < subdivisions + 1; i++) {
+				const t1 = (i / subdivisions) * size;
+
+				const pts: Vec3[] = [];
+				const crossPts: Vec3[] = [];
+
+				for (let j = 0; j < pointCountPerAxis; j++) {
+					const t2 = (j / segments) * size;
+
+					const y = heightFunc(new THREE.Vector2(t1, t2)) + yOffset;
+					const crossY =
+						heightFunc(new THREE.Vector2(t2, t1)) + yOffset;
+
+					pts.push([t1 + from, y, t2 + from]);
+					crossPts.push([t2 + from, crossY, t1 + from]);
+				}
+
+				const l1 = this.lineStrip(pts, lineConfig);
+				const l2 = this.lineStrip(crossPts, lineConfig);
+
+				lines.push(l1, l2);
+			}
+		}
+
+		const heightField = this.heightField(
+			size,
+			segments,
+			heightFunc,
+			colorFunc
+		);
+
+		const graph3d = new Graph3d(heightField, lines);
+
+		this.spawn(graph3d);
+
+		return graph3d;
 	};
 
 	/**

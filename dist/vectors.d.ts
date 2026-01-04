@@ -16242,6 +16242,13 @@ export declare class HeightField {
 	 */
 	setColor(index: number, color: THREE.ColorRepresentation): void;
 }
+declare class Graph3d extends Object3D {
+	/** The height field mesh representing the 3D graph. */
+	heightField: HeightField;
+	/** The grid lines on the XZ plane. */
+	gridLines: Line2[];
+	constructor(heightField: HeightField, gridLines: Line2[]);
+}
 /** Returns a new THREE.Vector2 instance. */
 export declare const vec2: (x: number, y: number) => Vector2;
 /** Returns a new THREE.Vector3 instance. */
@@ -16723,21 +16730,43 @@ export declare class Ctx {
 	 * Creates and adds a 3D graph of a mathematical function to the scene. X and Z are the input axes, Y is the output axis.
 	 * ### Example
 	 * ```js
+	 * // Graphing a 3D sine-cosine surface over a square with width and depth of Math.PI
 	 * ctx.graph3d(
 	 *     (x, z) => Math.sin(x) * Math.cos(z),
 	 *     "red",
 	 *     Math.PI
 	 * );
+	 *
+	 * // Graphing with per-vertex colors
+	 * ctx.graph3d((x, z) => {
+	 *     const value = x * x + z * z;
+	 *     return [value * 0.25, ctx.COLOR.heatmap(value)]
+	 * });
+	 *
+	 * // Graphing with a grid overlay
+	 * ctx.graph3d(
+	 *     (x, z) => z * z - x * x,
+	 *     null,
+	 *     null,
+	 *     {
+	 *         subdivisions: 10,
+	 *         lineStyle: "dashed"
+	 *     }
+	 * );
 	 * ```
 	 * @param func The mathematical function to graph. A function of (x, z) returning y or [y, color]. When returning a tuple, the color is used as the per-vertex color.
 	 * @param color (Optional) Base color of the height field. See {@link THREE.ColorRepresentation} for details. Ignored if the function returns per-vertex colors.
 	 * @param span (Optional) Width and depth of the graph area. Defaults to 200 units scaled by the camera scale.
-	 * @returns The created height field mesh.
+	 * @param grid (Optional) Whether to draw a grid overlay on the height field. Can be a boolean or an object specifying subdivisions and lineStyle. Defaults to false
+	 * @returns The created {@link Graph3d} instance.
 	 */
 	graph3d: (func: (x: number, z: number) => number | [
 		number,
 		THREE.ColorRepresentation
-	], color?: THREE.ColorRepresentation | null, span?: number) => HeightField;
+	], color?: THREE.ColorRepresentation | null, span?: number | null, grid?: boolean | {
+		subdivisions?: number;
+		lineStyle?: LineStyle;
+	}) => Graph3d;
 	/**
 	 * Creates and adds a grid helper to the scene.
 	 * ### Example
