@@ -931,6 +931,52 @@ export class Ctx {
 	};
 
 	/**
+	 * Creates and adds a 3D graph of a mathematical function to the scene. X and Z are the input axes, Y is the output axis.
+	 * ### Example
+	 * ```js
+	 * ctx.graph3d(
+	 *     (x, z) => Math.sin(x) * Math.cos(z),
+	 *     "red",
+	 *     Math.PI
+	 * );
+	 * ```
+	 * @param func The mathematical function to graph. A function of (x, z) returning y or [y, color]. When returning a tuple, the color is used as the per-vertex color.
+	 * @param color (Optional) Base color of the height field. See {@link THREE.ColorRepresentation} for details. Ignored if the function returns per-vertex colors.
+	 * @param span (Optional) Width and depth of the graph area. Defaults to 200 units scaled by the camera scale.
+	 * @returns The created height field mesh.
+	 */
+	graph3d = (
+		func: (
+			x: number,
+			z: number
+		) => number | [number, THREE.ColorRepresentation],
+		color?: THREE.ColorRepresentation | null,
+		span?: number
+	) => {
+		const { x: scaleX, y: scaleY, z: scaleZ } = this.camera.scale;
+		const scale = Math.min(scaleX, scaleY, scaleZ);
+
+		const size = span ?? 200 * scale;
+		const from = -size * 0.5;
+		const resolution = 0.05 / scale;
+
+		const pointCountPerAxis = Math.round(size * resolution);
+		const segments = pointCountPerAxis - 1;
+
+		const heightFunc = (pos: THREE.Vector2) => {
+			const res = func(pos.x + from, pos.y + from);
+			return Array.isArray(res) ? res[0] : res;
+		};
+
+		const colorFunc = (pos: THREE.Vector2) => {
+			const res = func(pos.x + from, pos.y + from);
+			return Array.isArray(res) ? res[1] : color ?? this.COLOR.FOREGROUND;
+		};
+
+		return this.heightField(size, segments, heightFunc, colorFunc);
+	};
+
+	/**
 	 * Creates and adds a grid helper to the scene.
 	 * ### Example
 	 * ```js
