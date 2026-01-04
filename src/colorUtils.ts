@@ -79,6 +79,17 @@ export const lightColors = {
 	gray(factor: number) {
 		return this.BACKGROUND.lerp(this.FOREGROUND, factor);
 	},
+	/**
+	 * A piecewise gradient from blue at 0.0 to red at 1.0, passing through green.
+	 * @param factor A number between 0 and 1 representing the interpolation factor.
+	 * @returns A THREE.Color instance representing the heatmap color.
+	 */
+	heatmap(factor: number) {
+		if (factor <= 0.5) {
+			return color(0x0000ff).lerp(color(0x00ff00), factor * 2);
+		}
+		return color(0x00ff00).lerp(color(0xff0000), (factor - 0.5) * 2);
+	},
 };
 
 export const darkColors = {
@@ -95,4 +106,5 @@ export const darkColors = {
 		return color(cssColors.dark.background);
 	},
 	gray: lightColors.gray,
+	heatmap: lightColors.heatmap,
 };

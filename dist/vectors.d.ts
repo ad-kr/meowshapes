@@ -16137,7 +16137,11 @@ declare class Line2 extends LineSegments2 {
 type Text$1 = THREE.Mesh<THREE.ShapeGeometry, THREE.MeshBasicMaterial | THREE.MeshStandardMaterial>;
 type Sphere$1 = THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial | THREE.MeshStandardMaterial>;
 export type Cone = THREE.Mesh<THREE.ConeGeometry, THREE.MeshBasicMaterial | THREE.MeshStandardMaterial>;
-declare class Arrow extends Object3D {
+/**
+ *  A container for arrow components, line and cone. Line and cone are supplied in their correct positions, pointing
+ *  upwards.
+ */
+export declare class Arrow extends Object3D {
 	/**
 	 * The line part of the arrow.
 	 */
@@ -16199,7 +16203,10 @@ declare class Points$1 {
 	 */
 	setAlpha(index: number, alpha: number): void;
 }
-declare class HeightField {
+/**
+ * Helper class for working with height fields.
+ */
+export declare class HeightField {
 	/**
 	 * The inner THREE.Mesh object.
 	 */
@@ -16439,6 +16446,7 @@ export declare class Ctx {
 		readonly SECONDARY: THREE.Color;
 		readonly BACKGROUND: THREE.Color;
 		gray(factor: number): THREE.Color;
+		heatmap(factor: number): THREE.Color;
 	};
 	/**
 	 * Creates and adds 3D text to the scene.
@@ -16711,6 +16719,25 @@ export declare class Ctx {
 		number,
 		number
 	]) => Line2;
+	/**
+	 * Creates and adds a 3D graph of a mathematical function to the scene. X and Z are the input axes, Y is the output axis.
+	 * ### Example
+	 * ```js
+	 * ctx.graph3d(
+	 *     (x, z) => Math.sin(x) * Math.cos(z),
+	 *     "red",
+	 *     Math.PI
+	 * );
+	 * ```
+	 * @param func The mathematical function to graph. A function of (x, z) returning y or [y, color]. When returning a tuple, the color is used as the per-vertex color.
+	 * @param color (Optional) Base color of the height field. See {@link THREE.ColorRepresentation} for details. Ignored if the function returns per-vertex colors.
+	 * @param span (Optional) Width and depth of the graph area. Defaults to 200 units scaled by the camera scale.
+	 * @returns The created height field mesh.
+	 */
+	graph3d: (func: (x: number, z: number) => number | [
+		number,
+		THREE.ColorRepresentation
+	], color?: THREE.ColorRepresentation | null, span?: number) => HeightField;
 	/**
 	 * Creates and adds a grid helper to the scene.
 	 * ### Example
