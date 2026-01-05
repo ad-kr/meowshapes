@@ -55,9 +55,9 @@ type LineStyle<Extra extends object = {}> =
 	| THREE.ColorRepresentation
 	| LineConfig<Extra>;
 
-const toLineConfig = (style: LineStyle): LineConfig => {
+const toLineConfig = (style: LineStyle, zoom: number): LineConfig => {
 	if (style === null || style === undefined) return {};
-	if (style === "dashed") return { dashSize: 20, gapSize: 10 };
+	if (style === "dashed") return { dashSize: 20 * zoom, gapSize: 10 * zoom };
 	if (typeof style === "object" && !(style instanceof THREE.Color)) {
 		return style;
 	}
@@ -588,7 +588,7 @@ export class Ctx {
 		const vecPoints = points.map(toVec3);
 		const geometry = new LineGeometry().setFromPoints(vecPoints);
 
-		const lineConfig = toLineConfig(style);
+		const lineConfig = toLineConfig(style, this.zoom());
 		const dashed =
 			lineConfig.dashSize !== undefined &&
 			lineConfig.gapSize !== undefined;
@@ -663,7 +663,7 @@ export class Ctx {
 		const length = vec.length();
 		const dir = endVec.clone().sub(startVec).normalize();
 
-		const lineConfig = toLineConfig(style);
+		const lineConfig = toLineConfig(style, this.zoom());
 		const color =
 			"colorEnd" in lineConfig
 				? lineConfig.colorEnd!
@@ -1019,7 +1019,7 @@ export class Ctx {
 				typeof grid === "object" ? grid.subdivisions ?? 10 : 10;
 			const lineStyle =
 				typeof grid === "object" ? grid.lineStyle : undefined;
-			const lineConfig = toLineConfig(lineStyle);
+			const lineConfig = toLineConfig(lineStyle, this.zoom());
 
 			lineConfig.lineWidth = lineConfig.lineWidth ?? 1;
 
