@@ -16402,11 +16402,11 @@ export declare class Ctx {
 	 */
 	background: (color: THREE.ColorRepresentation) => void;
 	/**
-	 * Gets or sets the zoom level of the camera.
-	 * @param factor (Optional) If provided, sets the zoom level to this factor.
+	 * Gets or sets the zoom level of the camera. The zoom level is the inverse of the camera's scale.
+	 * @param value (Optional) If provided, sets the zoom level to this factor.
 	 * @returns The current zoom level of the camera.
 	 */
-	zoom: (factor?: number) => number;
+	zoom: (value?: number) => number;
 	/**
 	 * Configures orbit controls for the camera.
 	 * ### Example

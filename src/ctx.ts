@@ -57,7 +57,7 @@ type LineStyle<Extra extends object = {}> =
 
 const toLineConfig = (style: LineStyle, zoom: number): LineConfig => {
 	if (style === null || style === undefined) return {};
-	if (style === "dashed") return { dashSize: 20 * zoom, gapSize: 10 * zoom };
+	if (style === "dashed") return { dashSize: 20 / zoom, gapSize: 10 / zoom };
 	if (typeof style === "object" && !(style instanceof THREE.Color)) {
 		return style;
 	}
@@ -186,16 +186,16 @@ export class Ctx {
 	};
 
 	/**
-	 * Gets or sets the zoom level of the camera.
-	 * @param factor (Optional) If provided, sets the zoom level to this factor.
+	 * Gets or sets the zoom level of the camera. The zoom level is the inverse of the camera's scale.
+	 * @param value (Optional) If provided, sets the zoom level to this factor.
 	 * @returns The current zoom level of the camera.
 	 */
-	zoom = (factor?: number) => {
-		if (factor !== undefined) {
-			this.camera.scale.setScalar(factor);
+	zoom = (value?: number) => {
+		if (value !== undefined) {
+			this.camera.scale.setScalar(1 / value);
 		}
 		const { x: scaleX, y: scaleY, z: scaleZ } = this.camera.scale;
-		return Math.min(scaleX, scaleY, scaleZ);
+		return 1 / Math.min(scaleX, scaleY, scaleZ);
 	};
 
 	/**
@@ -669,15 +669,12 @@ export class Ctx {
 				? lineConfig.colorEnd!
 				: lineConfig.color ?? this.COLOR.FOREGROUND;
 
-		const { x: scaleX, y: scaleY, z: scaleZ } = this.camera.scale;
-		const scale = Math.min(scaleX, scaleY, scaleZ);
-
 		const headLengthConfig =
 			style && typeof style === "object" && "headLength" in style
 				? style.headLength
 				: "auto";
 		const headLength =
-			headLengthConfig === "auto" ? 12 * scale : headLengthConfig;
+			headLengthConfig === "auto" ? 12 / this.zoom() : headLengthConfig;
 		const cone = this.cone([0, 0, 0], headLength, headLength * 0.5, color);
 		cone.geometry.translate(0, length - headLength, 0);
 
@@ -910,10 +907,7 @@ export class Ctx {
 		style?: LineStyle,
 		range?: [number, number]
 	) => {
-		const { x: scaleX, y: scaleY, z: scaleZ } = this.camera.scale;
-		const scale = Math.min(scaleX, scaleY, scaleZ);
-
-		const cameraExtent = this.getCameraExtent() * scale;
+		const cameraExtent = this.getCameraExtent() / this.zoom();
 		const from = range?.[0] ?? -cameraExtent;
 		const to = range?.[1] ?? cameraExtent;
 
@@ -922,7 +916,7 @@ export class Ctx {
 		}
 
 		// At scale 1, we want approximately one point every 2 screen pixels
-		const resolution = 0.5 / scale;
+		const resolution = 0.5 * this.zoom();
 		const pointCount = Math.round((to - from) * resolution);
 		const points: Vec3[] = [];
 
@@ -992,12 +986,9 @@ export class Ctx {
 					lineStyle?: LineStyle;
 			  }
 	) => {
-		const { x: scaleX, y: scaleY, z: scaleZ } = this.camera.scale;
-		const scale = Math.min(scaleX, scaleY, scaleZ);
-
-		const size = span ?? 200 * scale;
+		const size = span ?? 200 / this.zoom();
 		const from = -size * 0.5;
-		const resolution = 0.1 / scale;
+		const resolution = 0.1 * this.zoom();
 
 		const pointCountPerAxis = Math.round(size * resolution);
 		const segments = pointCountPerAxis - 1;
@@ -1023,7 +1014,7 @@ export class Ctx {
 
 			lineConfig.lineWidth = lineConfig.lineWidth ?? 1;
 
-			const yOffset = 1 * scale;
+			const yOffset = 1 / this.zoom();
 
 			for (let i = 0; i < subdivisions + 1; i++) {
 				const t1 = (i / subdivisions) * size;
