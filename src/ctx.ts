@@ -186,6 +186,19 @@ export class Ctx {
 	};
 
 	/**
+	 * Gets or sets the zoom level of the camera.
+	 * @param factor (Optional) If provided, sets the zoom level to this factor.
+	 * @returns The current zoom level of the camera.
+	 */
+	zoom = (factor?: number) => {
+		if (factor !== undefined) {
+			this.camera.scale.setScalar(factor);
+		}
+		const { x: scaleX, y: scaleY, z: scaleZ } = this.camera.scale;
+		return Math.min(scaleX, scaleY, scaleZ);
+	};
+
+	/**
 	 * Configures orbit controls for the camera.
 	 * ### Example
 	 * ```js
