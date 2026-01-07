@@ -676,7 +676,7 @@ export class Ctx {
 		const headLength =
 			headLengthConfig === "auto" ? 12 / this.zoom() : headLengthConfig;
 		const cone = this.cone([0, 0, 0], headLength, headLength * 0.5, color);
-		cone.geometry.translate(0, length - headLength, 0);
+		cone.geometry.translate(0, length - headLength * 0.5, 0);
 
 		const line = this.line(
 			[0, 0, 0],
