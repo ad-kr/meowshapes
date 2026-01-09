@@ -45,6 +45,7 @@ export class Arrow implements RendererObject<ArrowColor> {
 		this.cone.mesh.matrixAutoUpdate = false;
 
 		this.mesh = new THREE.Group();
+		this.mesh.position.copy(fromVec);
 		this.mesh.add(this.line.mesh);
 		this.mesh.add(this.cone.mesh);
 
