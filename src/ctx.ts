@@ -1,70 +1,32 @@
 import {
 	darkColors,
 	lightColors,
-	toMaterial,
 	color as toColor,
-	type ObjectColor,
 	type Theme,
 } from "./colorUtils.ts";
-import { THREE, type Sphere } from "./index.ts";
-import {
-	Arrow,
-	Graph3d,
-	HeightField,
-	Points,
-	type Cone,
-	type Text,
-} from "./objectHelpers.ts";
-import {
-	DIR,
-	toVec2,
-	toVec3,
-	vec2,
-	vec3,
-	type Vec2,
-	type Vec3,
-} from "./vecUtils.ts";
-import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
-import { LineMaterial } from "three/addons/lines/LineMaterial.js";
-import { Line2 } from "three/addons/lines/Line2.js";
-import { LineGeometry } from "three/addons/lines/LineGeometry.js";
-import { defaultFont } from "./defaultFont.ts";
+import { THREE } from "./index.ts";
+import { toVec3, vec3, type Vec2, type Vec3 } from "./vecUtils.ts";
+import { Font } from "three/addons/loaders/FontLoader.js";
 import { Checkbox, Slider } from "./domElements.ts";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import {
+	Arrow,
+	Circle,
+	Cone,
+	Cuboid,
+	Cylinder,
+	Graph,
+	Graph3d,
+	HeightField,
+	LineStrip,
+	Plane,
+	Points,
+	Sphere,
+	Torus,
+} from "./objects/index.ts";
+import { Text } from "./objects/text.ts";
 
 export type UpdateFn = (dt: number, elapsed: number) => void;
-
-type LineConfig<Extra extends object = {}> = {
-	color?: THREE.ColorRepresentation;
-	dashSize?: number;
-	gapSize?: number;
-	lineWidth?: number;
-} & (
-	| {
-			colorStart: THREE.ColorRepresentation;
-			colorEnd: THREE.ColorRepresentation;
-	  }
-	| {}
-) &
-	Extra;
-
-type LineStyle<Extra extends object = {}> =
-	| null
-	| undefined
-	| "dashed"
-	| THREE.ColorRepresentation
-	| LineConfig<Extra>;
-
-const toLineConfig = (style: LineStyle, zoom: number): LineConfig => {
-	if (style === null || style === undefined) return {};
-	if (style === "dashed") return { dashSize: 20 / zoom, gapSize: 10 / zoom };
-	if (typeof style === "object" && !(style instanceof THREE.Color)) {
-		return style;
-	}
-	return { color: style };
-};
-
-type ArrowLineStyle = LineStyle<{ headLength?: number | "auto" }>;
 
 export class Ctx {
 	/**
@@ -119,7 +81,7 @@ export class Ctx {
 	/**
 	 * The font used for rendering text. Loaded on demand.
 	 */
-	private font: Font | null = null;
+	font: Font | null = null;
 
 	/**
 	 * Global hemisphere light added to the scene for basic illumination.
@@ -278,77 +240,17 @@ export class Ctx {
 	}
 
 	/**
-	 * Creates and adds 3D text to the scene.
+	 * Creates and adds a 3D text to the scene.
 	 * ### Example
 	 * ```js
-	 * ctx.text("Hello, World!", 24);
+	 * ctx.text("Hello, World!").size(12).dir("rtl");
+	 *
+	 * ctx.text("Always facing the camera").billboard();
 	 * ```
 	 * @param value The text string to be rendered.
-	 * @param size The size of the text. If null, defaults to 16.
-	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
-	 * @param direction (Optional) The direction of the text. Can be "ltr" (left-to-right), "rtl" (right-to-left), or "tb" (top-to-bottom).
-	 * @returns The created THREE.Mesh instance representing the text. For convenience, this is typed as {@link Text}.
+	 * @returns The created {@link Text} instance.
 	 */
-	text = (
-		value: string,
-		size?: number | null,
-		color?: ObjectColor,
-		direction?: "ltr" | "rtl" | "tb"
-	): Text => {
-		if (this.font === null) {
-			const loader = new FontLoader();
-			this.font = loader.parse(defaultFont);
-			return this.text(value, size, color, direction);
-		}
-
-		const shapes = this.font.generateShapes(value, size ?? 16, direction);
-		const geometry = new THREE.ShapeGeometry(shapes);
-		geometry.computeBoundingBox();
-		geometry.translate(
-			-(geometry.boundingBox!.max.x - geometry.boundingBox!.min.x) * 0.5,
-			-(geometry.boundingBox!.max.y - geometry.boundingBox!.min.y) * 0.5,
-			0
-		);
-		const material = toMaterial(color, this.COLOR.FOREGROUND);
-		material.side = THREE.DoubleSide;
-		const text = new THREE.Mesh(geometry, material);
-		this.spawn(text);
-		return text;
-	};
-
-	/**
-	 * A billboarding version of {@link text}, which always faces the camera.
-	 * ### Example
-	 * ```js
-	 * ctx.textBillboard("Hello, World!", 24);
-	 * ```
-	 * @param value The text string to be rendered.
-	 * @param size The size of the text. If null, defaults to 16.
-	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
-	 * @param direction (Optional) The direction of the text. Can be "ltr" (left-to-right), "rtl" (right-to-left), or "tb" (top-to-bottom).
-	 * @returns The created THREE.Mesh instance representing the billboarding text. For convenience, this is typed as {@link Text}.
-	 */
-	textBillboard = (
-		value: string,
-		size?: number | null,
-		color?: ObjectColor,
-		direction?: "ltr" | "rtl" | "tb"
-	) => {
-		const textMesh = this.text(value, size, color, direction);
-
-		const rotate = () => {
-			const cameraRotation = this.camera.quaternion.clone();
-			textMesh.quaternion.copy(cameraRotation);
-		};
-
-		if (this.mode !== "IMMEDIATE") {
-			this.update(rotate);
-		} else {
-			rotate();
-		}
-
-		return textMesh;
-	};
+	text = (value: string) => new Text(this, value);
 
 	/**
 	 * Creates a button element and adds it to the renderer's DOM wrapper.
@@ -551,508 +453,232 @@ export class Ctx {
 	};
 
 	/**
-	 * Creates and adds a line to the scene.
+	 * Creates and adds a line between two points to the scene.
 	 * ### Example
 	 * ```js
-	 * ctx.line([0, 0, 0], [10, 10, 10]); // Uses default foreground color
-	 * ctx.line(vec3(0, 0, 0), vec3(10, 0, 0), "dashed");
-	 * ctx.line([0, 0, 0], [0, 10, 0], { color: "red", dashSize: 5, gapSize: 2 });
+	 * const line = ctx.line([0, 0, 0], [10, 10, 10]);
+	 *
+	 * line
+	 *     .color("blue")
+	 *     .linewidth(5)
+	 *     .dashed(2, 1);
 	 * ```
-	 * @param start A vector representing the start point of the line.
-	 * @param end A vector representing the end point of the line.
-	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
-	 * @returns The created THREE.Line instance. For convenience, this is typed as {@link Line}.
+	 * @param start Starting position of the line.
+	 * @param end Ending position of the line.
+	 * @returns The created {@link LineStrip} instance.
 	 */
-	line = (start: Vec3, end: Vec3, style?: LineStyle): Line2 => {
-		return this.lineStrip([start, end], style);
-	};
+	line = (start: Vec3, end: Vec3) => this.lineStrip([start, end]);
 
 	/**
 	 * Creates and adds a line strip to the scene.
 	 * ### Example
 	 * ```js
-	 * ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]]); // Uses default foreground color
-	 * ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]], "dashed");
-	 * ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]], { color: "blue", dashSize: 3, gapSize: 1 });
+	 * const strip = ctx.lineStrip([[0, 0, 0], [10, 0, 0], [10, 10, 0]]);
+	 *
+	 * strip
+	 *    .color(["green", "yellow", "red"])
+	 *    .linewidth(10)
+	 *    .dashed(4, 2);
 	 * ```
 	 * @param points An array of vectors representing the points of the line strip.
-	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
-	 * @param colors (Optional) An array of color representations for each vertex in the line strip. When provided, this overrides the color specified in the style parameter.
-	 * @returns The created THREE.Line instance. For convenience, this is typed as {@link Line}.
+	 * @returns The created {@link LineStrip} object.
 	 */
-	lineStrip = (
-		points: Vec3[],
-		style?: LineStyle,
-		colors?: THREE.ColorRepresentation[]
-	): Line2 => {
-		const vecPoints = points.map(toVec3);
-		const geometry = new LineGeometry().setFromPoints(vecPoints);
-
-		const lineConfig = toLineConfig(style, this.zoom());
-		const dashed =
-			lineConfig.dashSize !== undefined &&
-			lineConfig.gapSize !== undefined;
-
-		let vertexColors = undefined;
-		if (colors !== undefined) {
-			vertexColors = new Float32Array(colors.length * 3);
-
-			for (let i = 0; i < colors.length; i++) {
-				const c = toColor(colors[i]!);
-				vertexColors[i * 3] = c.r;
-				vertexColors[i * 3 + 1] = c.g;
-				vertexColors[i * 3 + 2] = c.b;
-			}
-
-			geometry.setColors(vertexColors);
-		} else if ("colorStart" in lineConfig && "colorEnd" in lineConfig) {
-			vertexColors = new Float32Array(vecPoints.length * 3);
-			const startColor = toColor(lineConfig.colorStart!);
-			const endColor = toColor(lineConfig.colorEnd!);
-
-			for (let i = 0; i < vecPoints.length; i++) {
-				const t = i / (vecPoints.length - 1);
-				const c = startColor.clone().lerp(endColor, t);
-				vertexColors[i * 3] = c.r;
-				vertexColors[i * 3 + 1] = c.g;
-				vertexColors[i * 3 + 2] = c.b;
-			}
-
-			geometry.setColors(vertexColors);
-		}
-
-		const material = new LineMaterial({
-			color:
-				vertexColors === undefined
-					? lineConfig.color ?? this.COLOR.FOREGROUND
-					: undefined,
-			dashSize: lineConfig.dashSize ?? 0,
-			gapSize: lineConfig.gapSize ?? 0,
-			linewidth: lineConfig.lineWidth ?? 2,
-			dashed,
-			vertexColors: vertexColors !== undefined,
-		});
-
-		const line = new Line2(geometry, material);
-		line.computeLineDistances();
-		this.spawn(line);
-		return line;
-	};
+	lineStrip = (points: Vec3[]) => new LineStrip(this, points);
 
 	/**
-	 * Creates and adds an arrow to the scene.
+	 * Creates an arrow from a start point to an end point.
 	 * ### Example
 	 * ```js
-	 * ctx.arrow([0, 0, 0], [10, 10, 10]); // Uses default foreground color
-	 * ctx.arrow([0, 0, 0], [10, 0, 0], "red");
+	 * const arrow = ctx.arrow([0, 0, 0], [10, 10, 10]);
+	 *
+	 * arrow
+	 *     .color("red")
+	 *     .linewidth(3).dashed(1, 1);
+	 *
+	 * ctx.arrow([0, 0, 0], [10, 0, 0], 5); // Arrow with custom head length
 	 * ```
-	 * @param start The start point of the arrow.
-	 * @param end The end point of the arrow.
-	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
-	 * @returns The created THREE.ArrowHelper instance.
+	 * @param start Starting position of the arrow.
+	 * @param end Ending position of the arrow.
+	 * @param headLength (Optional) Length of the arrowhead.
+	 * @returns The created {@link Arrow} instance.
 	 */
-	arrow = <Style extends LineStyle>(
-		start: Vec3,
-		end: Vec3,
-		style?: ArrowLineStyle
-	) => {
-		const startVec = toVec3(start);
-		const endVec = toVec3(end);
-
-		const vec = endVec.clone().sub(startVec);
-		const length = vec.length();
-		const dir = endVec.clone().sub(startVec).normalize();
-
-		const lineConfig = toLineConfig(style, this.zoom());
-		const color =
-			"colorEnd" in lineConfig
-				? lineConfig.colorEnd!
-				: lineConfig.color ?? this.COLOR.FOREGROUND;
-
-		const headLengthConfig =
-			style && typeof style === "object" && "headLength" in style
-				? style.headLength
-				: "auto";
-		const headLength =
-			headLengthConfig === "auto" ? 12 / this.zoom() : headLengthConfig;
-		const cone = this.cone([0, 0, 0], headLength, headLength * 0.5, color);
-		cone.geometry.translate(0, length - headLength * 0.5, 0);
-
-		const line = this.line(
-			[0, 0, 0],
-			DIR.Y.multiplyScalar(length - headLength),
-			lineConfig
-		);
-
-		const arrow = new Arrow(startVec, dir, line, cone);
-		this.spawn(arrow);
-
-		return arrow;
-	};
+	arrow = (start: Vec3, end: Vec3, headLength?: number) =>
+		new Arrow(this, start, end, headLength);
 
 	/**
-	 * Creates an arrow starting from the origin (0, 0, 0) to the given vector.
+	 * Creates an arrow starting from the origin (0, 0, 0) up to the given vector.
 	 * ### Example
 	 * ```js
-	 * ctx.vector([10, 10, 10]); // Uses default foreground color
-	 * ctx.vector(vec3(10, 0, 0), "blue");
+	 * ctx.vector([10, 10, 10]);
 	 * ```
 	 * @param vec The vector to be drawn.
-	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
-	 * @returns The created THREE.ArrowHelper instance.
+	 * @param headLength (Optional) Length of the arrowhead.
+	 * @returns The created {@link Arrow} instance.
 	 */
-	vector = (vec: Vec3, style?: ArrowLineStyle) => {
-		return this.arrow(vec3(0, 0, 0), vec, style);
-	};
+	vector = (vec: Vec3, headLength?: number) =>
+		this.arrow(vec3(0, 0, 0), vec, headLength);
 
 	/**
-	 * Creates and adds a cuboid (rectangular box) to the scene.
+	 * Creates a cuboid (rectangular box) object.
 	 * ### Example
 	 * ```js
-	 * ctx.cuboid([0, 0, 0], [10, 5, 3]);
-	 * ctx.cuboid(vec3(5, 5, 5), vec3(2, 4, 6), "green");
+	 * const box = ctx.cuboid(10, 5, 3);
+	 *
+	 * box.width(15).height(7).depth(4);
 	 * ```
-	 * @param position A vector representing the position of the cuboid's center.
-	 * @param size A vector representing the width, height and depth of the cuboid.
-	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
-	 * @returns The created THREE.Mesh instance representing the cuboid.
+	 * @param width Width of the cuboid on the x-axis
+	 * @param height Height of the cuboid on the y-axis
+	 * @param depth Depth of the cuboid on the z-axis
+	 * @returns The created {@link Cuboid} object.
 	 */
-	cuboid = (position: Vec3, size: Vec3, color?: ObjectColor) => {
-		const pos = toVec3(position);
-		const sizeVec = toVec3(size);
-		const geometry = new THREE.BoxGeometry(sizeVec.x, sizeVec.y, sizeVec.z);
-		const material = toMaterial(color, this.COLOR.FOREGROUND);
-		const mesh = new THREE.Mesh(geometry, material);
-		mesh.position.copy(pos);
-		this.spawn(mesh);
-		return mesh;
-	};
+	cuboid = (width: number, height: number, depth: number) =>
+		new Cuboid(this, width, height, depth);
 
 	/**
 	 * Creates and adds a circle to the scene.
 	 * ### Example
 	 * ```js
-	 * ctx.circle([0, 0, 0], 5);
-	 * ctx.circle(vec3(10, 10, 0), 8, "blue");
+	 * const circle = ctx.circle(5);
+	 * circle.radius(10).segments(64).pos([0, 0, 0]).color("blue");
 	 * ```
-	 * @param position A vector representing the position of the circle's center.
 	 * @param radius The radius of the circle.
-	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
-	 * @returns The created THREE.Mesh instance representing the circle.
+	 * @returns The created {@link Circle} object.
 	 */
-	circle = (position: Vec3, radius: number, color?: ObjectColor) => {
-		const pos = toVec3(position);
-		const geometry = new THREE.CircleGeometry(radius);
-		const material = toMaterial(color, this.COLOR.FOREGROUND);
-		const mesh = new THREE.Mesh(geometry, material);
-		mesh.position.copy(pos);
-		this.spawn(mesh);
-		return mesh;
-	};
+	circle = (radius: number) => new Circle(this, radius);
 
 	/**
 	 * Creates and adds a cylinder to the scene.
 	 * ### Example
 	 * ```js
-	 * ctx.cylinder([0, 0, 0], 5, 5, 10);
-	 * ctx.cylinder(vec3(10, 10, 0), 4, 6, 12, "green");
+	 * const cylinder = ctx.cylinder(5, 5, 10);
+	 *
+	 * cylinder
+	 *     .radiusTop(7)
+	 *     .radiusBottom(3)
+	 *     .height(15)
+	 *     .segments(32)
+	 *     .pos([0, 0, 0])
+	 *     .color("green");
 	 * ```
-	 * @param position A vector representing the position of the cylinder's center.
 	 * @param radiusTop The radius of the cylinder at the top.
 	 * @param radiusBottom The radius of the cylinder at the bottom.
 	 * @param height The height of the cylinder.
-	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
-	 * @returns The created THREE.Mesh instance representing the cylinder.
+	 * @returns The created {@link Cylinder} object.
 	 */
-	cylinder = (
-		position: Vec3,
-		radiusTop: number,
-		radiusBottom: number,
-		height: number,
-		color?: ObjectColor
-	) => {
-		const pos = toVec3(position);
-		const geometry = new THREE.CylinderGeometry(
-			radiusTop,
-			radiusBottom,
-			height
-		);
-		const material = toMaterial(color, this.COLOR.FOREGROUND);
-		const mesh = new THREE.Mesh(geometry, material);
-		mesh.position.copy(pos);
-		this.spawn(mesh);
-		return mesh;
-	};
+	cylinder = (radiusTop: number, radiusBottom: number, height: number) =>
+		new Cylinder(this, radiusTop, radiusBottom, height);
 
 	/**
 	 * Creates and adds a plane to the scene.
 	 * ### Example
 	 * ```js
-	 * ctx.plane([0, 0, 0], [10, 5]);
-	 * ctx.plane(vec3(10, 10, 0), vec2(8, 4), "gray");
+	 * const plane = ctx.plane(10, 10);
+	 *
+	 * plane
+	 *     .width(20)
+	 *     .height(15)
+	 *     .pos([0, 0, 0])
+	 *     .color("gray");
 	 * ```
-	 * @param position A vector representing the position of the plane's center.
-	 * @param size A vector representing the width and height of the plane.
-	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
-	 * @returns The created THREE.Mesh instance representing the plane.
+	 * @param width The width of the plane.
+	 * @param height The height of the plane.
+	 * @returns The created {@link Plane} object.
 	 */
-	plane = (position: Vec3, size: Vec2, color?: ObjectColor) => {
-		const pos = toVec3(position);
-		const sizeVec = toVec2(size);
-		const geometry = new THREE.PlaneGeometry(sizeVec.x, sizeVec.y);
-		const material = toMaterial(color, this.COLOR.FOREGROUND);
-		const mesh = new THREE.Mesh(geometry, material);
-		mesh.position.copy(pos);
-		this.spawn(mesh);
-		return mesh;
-	};
+	plane = (width: number, height: number) => new Plane(this, width, height);
 
 	/**
 	 * Creates and adds a torus to the scene.
 	 * ### Example
 	 * ```js
-	 * ctx.torus([0, 0, 0], 10, 3);
-	 * ctx.torus(vec3(5, 5, 5), 8, 2, "purple");
+	 * const torus = ctx.torus(10, 3);
+	 *
+	 * torus
+	 *    .radius(15)
+	 *    .tubeRadius(5)
+	 *    .radialSegments(64)
+	 *    .tubularSegments(32)
+	 *    .pos([0, 0, 0])
+	 *    .color("purple");
 	 * ```
-	 * @param position A vector representing the position of the torus's center.
-	 * @param radius The radius from the center of the torus to the center of the tube.
-	 * @param tubeRadius The radius of the tube.
-	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
-	 * @returns The created THREE.Mesh instance representing the torus.
+	 * @param radius
+	 * @param tubeRadius
+	 * @returns
 	 */
-	torus = (
-		position: Vec3,
-		radius: number,
-		tubeRadius: number,
-		color?: ObjectColor
-	) => {
-		const pos = toVec3(position);
-		const geometry = new THREE.TorusGeometry(radius, tubeRadius);
-		const material = toMaterial(color, this.COLOR.FOREGROUND);
-		const mesh = new THREE.Mesh(geometry, material);
-		mesh.position.copy(pos);
-		this.spawn(mesh);
-		return mesh;
-	};
+	torus = (radius: number, tubeRadius: number) =>
+		new Torus(this, radius, tubeRadius);
 
 	/**
 	 * Creates and adds a sphere to the scene.
 	 * ### Example
 	 * ```js
-	 * ctx.sphere([0, 0, 0], 3); // Uses default foreground color
-	 * ctx.sphere(vec3(0, 0, 0), 5, "red");
+	 * const sphere = ctx.sphere(3);
+	 *
+	 * sphere.radius(42);
+	 *
+	 * ctx.sphere(10)
+	 *     .pos([10, 10, 10])
+	 *     .color("red")
+	 *     .segments(32, 12);
 	 * ```
-	 * @param position A vector representing the position of the sphere.
 	 * @param radius The radius of the sphere.
-	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
-	 * @returns The created THREE.Mesh instance representing the sphere. For convenience, this is typed as {@link Sphere}.
+	 * @returns The created {@link Sphere} object.
 	 */
-	sphere = (position: Vec3, radius: number, color?: ObjectColor): Sphere => {
-		const pos = toVec3(position);
-		const geometry = new THREE.SphereGeometry(radius);
-		const material = toMaterial(color, this.COLOR.FOREGROUND);
-		const mesh = new THREE.Mesh(geometry, material);
-		mesh.position.copy(pos);
-		this.spawn(mesh);
-
-		return mesh;
-	};
+	sphere = (radius: number) => new Sphere(this, radius);
 
 	/**
 	 * Creates and adds a cone to the scene.
 	 * ### Example
 	 * ```js
-	 * ctx.cone(10, 5); // Uses default foreground color
-	 * ctx.cone(15, 7, "green");
+	 * const cone = ctx.cone(5, 10)
+	 *     .pos([0, 10, 0])
+	 *     .color("blue");
+	 *
+	 * cone.radius(7).height(15).segments(32);
 	 * ```
-	 * @param height Height of the cone from base to tip
 	 * @param radius Radius of the cone base
-	 * @param color (Optional) Object color. See {@link ObjectColor} for details.
-	 * @returns The created THREE.Mesh instance representing the cone. For convenience, this is typed as {@link Cone}.
+	 * @param height Height of the cone from base to tip
+	 * @returns The created {@link Cone} object.
 	 */
-	cone = (
-		position: Vec3,
-		height: number,
-		radius: number,
-		color?: ObjectColor
-	): Cone => {
-		const pos = toVec3(position);
-		const geometry = new THREE.ConeGeometry(radius, height);
-		const material = toMaterial(color, this.COLOR.FOREGROUND);
-		const mesh = new THREE.Mesh(geometry, material);
-		mesh.position.copy(pos);
-		this.spawn(mesh);
+	cone = (radius: number, height: number) => new Cone(this, radius, height);
 
-		return mesh;
-	};
-
-	// TODO: Add min/max, so that calculated values that exceed NaN or Infinity can be clamped. Otherwise, length
-	// computation fails
 	/**
 	 * Creates and adds a graph of a mathematical function to the scene.
 	 * ### Example
 	 * ```js
 	 * // Graph a sine wave from -10 to 10
-	 * ctx.graph(x => Math.sin(x), "dashed", [-10, 10]);
-	 * // Graph a quadratic function over the default range
-	 * ctx.graph(x => x * x, { color: "blue", dashSize: 5, gapSize: 2 });
+	 * ctx.graph(x => Math.sin(x));
+	 *
+	 * // Graph a quadratic function over the range -5 to 5
+	 * ctx.graph(x => x * x, [-5, 5])
+	 *     .dashed()
+	 *     .linewidth(5)
+	 *     .color("blue");
 	 * ```
-	 * @param func The mathematical function to graph. Usually a function of x returning y. In addition, the function can return a tuple of [y, color] to specify per-point colors. When colors are specified, they override the style parameter colors.
-	 * @param style (Optional) The style of the line. Can be "dashed", a color representation, or an object specifying color, dashSize, gapSize or linewidth. Defaults to the context's foreground color.
+	 * @param func The mathematical function to graph. A function of x returning y.
 	 * @param range (Optional) The range [from, to] over which to graph the function.
-	 * @returns The created THREE.Line instance representing the graph. For convenience, this is typed as {@link Line}.
+	 * @returns The created {@link Graph} instance.
 	 */
-	graph = (
-		func: (x: number) => number | [number, THREE.ColorRepresentation],
-		style?: LineStyle,
-		range?: [number, number]
-	) => {
-		const cameraExtent = this.getCameraExtent() / this.zoom();
-		const from = range?.[0] ?? -cameraExtent;
-		const to = range?.[1] ?? cameraExtent;
-
-		if (from >= to) {
-			throw new Error("Invalid range: 'to' must be greater than 'from'");
-		}
-
-		// At scale 1, we want approximately one point every 2 screen pixels
-		const resolution = 0.5 * this.zoom();
-		const pointCount = Math.round((to - from) * resolution);
-		const points: Vec3[] = [];
-
-		const colors = [];
-		for (let i = 0; i <= pointCount; i++) {
-			const x = from + (i / pointCount) * (to - from);
-			const res = func(x);
-			const [y, color] = Array.isArray(res) ? res : [res, null];
-
-			points.push([x, y, 0]);
-
-			if (color !== null) colors.push(color);
-		}
-
-		return this.lineStrip(
-			points,
-			style,
-			colors.length > 0 ? colors : undefined
-		);
-	};
+	graph = (func: (x: number) => number, range?: [number, number]) =>
+		new Graph(this, func, range);
 
 	/**
-	 * Creates and adds a 3D graph of a mathematical function to the scene. X and Z are the input axes, Y is the output axis.
+	 * Creates and adds a 3D graph of a mathematical function to the scene.
 	 * ### Example
 	 * ```js
-	 * // Graphing a 3D sine-cosine surface over a square with width and depth of Math.PI
-	 * ctx.graph3d(
-	 *     (x, z) => Math.sin(x) * Math.cos(z),
-	 *     "red",
-	 *     Math.PI
-	 * );
+	 * // Graph a 3D cosine-sine surface over a PI * PI area
+	 * ctx.graph3d((x, z) => Math.sin(x) * Math.cos(z), [Math.PI, Math.PI]);
 	 *
-	 * // Graphing with per-vertex colors
-	 * ctx.graph3d((x, z) => {
-	 *     const value = x * x + z * z;
-	 *     return [value * 0.25, ctx.COLOR.heatmap(value)]
-	 * });
-	 *
-	 * // Graphing with a grid overlay
-	 * ctx.graph3d(
-	 *     (x, z) => z * z - x * x,
-	 *     null,
-	 *     null,
-	 *     {
-	 *         subdivisions: 10,
-	 *         lineStyle: "dashed"
-	 *     }
-	 * );
+	 * // Graph a function with a grid overlay and variable color
+	 * ctx.graph3d((x, z) => x * z * 5)
+	 *    .grid(16, 32)
+	 *    .color((x, y, z) => ctx.COLOR.heatmap((y + 1) / 2));
 	 * ```
-	 * @param func The mathematical function to graph. A function of (x, z) returning y or [y, color]. When returning a tuple, the color is used as the per-vertex color.
-	 * @param color (Optional) Base color of the height field. See {@link THREE.ColorRepresentation} for details. Ignored if the function returns per-vertex colors.
-	 * @param span (Optional) Width and depth of the graph area. Defaults to 200 units scaled by the camera scale.
-	 * @param grid (Optional) Whether to draw a grid overlay on the height field. Can be a boolean or an object specifying subdivisions and lineStyle. Defaults to false
+	 * @param func The mathematical function to graph. A function of (x, z) returning y.
+	 * @param size (Optional) The size [width, depth] of the area to graph the function over.
 	 * @returns The created {@link Graph3d} instance.
 	 */
-	graph3d = (
-		func: (
-			x: number,
-			z: number
-		) => number | [number, THREE.ColorRepresentation],
-		color?: THREE.ColorRepresentation | null,
-		span?: number | null,
-		grid?:
-			| boolean
-			| {
-					subdivisions?: number;
-					lineStyle?: LineStyle;
-			  }
-	) => {
-		const size = span ?? 200 / this.zoom();
-		const from = -size * 0.5;
-		const resolution = 0.1 * this.zoom();
-
-		const pointCountPerAxis = Math.round(size * resolution);
-		const segments = pointCountPerAxis - 1;
-
-		const heightFunc = (pos: THREE.Vector2) => {
-			const res = func(pos.x + from, pos.y + from);
-			return Array.isArray(res) ? res[0] : res;
-		};
-
-		const colorFunc = (pos: THREE.Vector2) => {
-			const res = func(pos.x + from, pos.y + from);
-			return Array.isArray(res) ? res[1] : color ?? "red";
-		};
-
-		const lines = [];
-
-		if (!!grid) {
-			const subdivisions =
-				typeof grid === "object" ? grid.subdivisions ?? 10 : 10;
-			const lineStyle =
-				typeof grid === "object" ? grid.lineStyle : undefined;
-			const lineConfig = toLineConfig(lineStyle, this.zoom());
-
-			lineConfig.lineWidth = lineConfig.lineWidth ?? 1;
-
-			const yOffset = 1 / this.zoom();
-
-			for (let i = 0; i < subdivisions + 1; i++) {
-				const t1 = (i / subdivisions) * size;
-
-				const pts: Vec3[] = [];
-				const crossPts: Vec3[] = [];
-
-				for (let j = 0; j < pointCountPerAxis; j++) {
-					const t2 = (j / segments) * size;
-
-					const y = heightFunc(new THREE.Vector2(t1, t2)) + yOffset;
-					const crossY =
-						heightFunc(new THREE.Vector2(t2, t1)) + yOffset;
-
-					pts.push([t1 + from, y, t2 + from]);
-					crossPts.push([t2 + from, crossY, t1 + from]);
-				}
-
-				const l1 = this.lineStrip(pts, lineConfig);
-				const l2 = this.lineStrip(crossPts, lineConfig);
-
-				lines.push(l1, l2);
-			}
-		}
-
-		const heightField = this.heightField(
-			size,
-			segments,
-			heightFunc,
-			colorFunc
-		);
-
-		const graph3d = new Graph3d(heightField, lines);
-
-		this.spawn(graph3d);
-
-		return graph3d;
-	};
+	graph3d = (func: (x: number, z: number) => number, size?: Vec2) =>
+		new Graph3d(this, func, size);
 
 	/**
 	 * Creates and adds a grid helper to the scene.
@@ -1093,177 +719,46 @@ export class Ctx {
 	};
 
 	/**
-	 * An efficient way to render large point clouds.
+	 * Creates and adds a point cloud to the scene.
 	 * ### Example
 	 * ```js
-	 * const pts = new Array(1000).fill(vec3(0, 0, 0));
-	 * const points = ctx.points(pts, 3, "red");
-	 *
-	 * const point = points.getPosition(0); // Get position of first point
-	 * points.setPosition(0, vec3(10, 10, 10)); // Move first point
-	 *
-	 * console.log(`Point count: ${points.count}`);
-	 *
-	 * const color = points.getColor(0); // Get color of first point
-	 * points.setColor(0, "blue");
+	 * // Create a point cloud with random points
+	 * const pts = new Array(1000).fill(0).map(() => [
+	 *     Math.random() * 100 - 50,
+	 *     Math.random() * 100 - 50,
+	 *     Math.random() * 100 - 50
+	 * ]);
+	 * ctx.points(pts)
+	 *     .size(3)
+	 *     .color("red");
 	 * ```
 	 * @param points Array of point positions.
-	 * @param size Size of the points. Defaults to 2. All points are squares facing the camera.
-	 * @param color Color of the points. Defaults to the context's foreground color.
-	 * @returns Points helper object.
+	 * @returns The created {@link Points} instance.
 	 */
-	points = (
-		points: Vec3[],
-		size?: number | null,
-		color?: THREE.ColorRepresentation
-	): Points => {
-		const pointCloud = new Points(
-			points,
-			size ?? 2,
-			new THREE.Color(color ?? this.COLOR.FOREGROUND)
-		);
-		this.spawn(pointCloud.mesh);
-		return pointCloud;
-	};
+	points = (points: Vec3[]) => new Points(this, points);
 
 	/**
 	 * Creates and adds a height field to the scene.
 	 * ### Example
 	 * ```js
-	 * // Flat height field
-	 * ctx.heightField(100, 10);
-	 *
 	 * // Height field with random heights
 	 * const heights = new Array(100).fill(0).map(() => Math.random() * 10);
-	 * ctx.heightField(100, 9, heights);
-	 *
-	 * // Height field with heights defined by a function
-	 * ctx.heightField(100, 9, (pos) => Math.sin(pos.x) * 10);
+	 * ctx.heightField([100, 100], [9, 9], heights);
 	 *
 	 * // Height field with per-vertex colors
-	 * ctx.heightField(100, 1, null, ["blue", "red", "green", "yellow"]);
-	 *
-	 * // Height field with heights and colors defined by functions
-	 * ctx.heightField(
-	 *     100,
-	 *     400,
-	 *     (pos) => Math.sin(pos.length() * 0.05) * 10,
-	 *     (pos) => (Math.sin(pos.length() * 0.5) > 0 ? "crimson" : "darkblue")
-	 * );
+	 * ctx.heightField([100, 100], [1, 1], [0, 0, 0, 0])
+	 *     .color(["blue", "red", "green", "yellow"]);
 	 * ```
-	 * @param size The size of the height field.
-	 * @param segments The number of segments in the height field.
-	 * @param heights An array of heights or a function that returns a height given a position.
-	 * @param color A color, array of colors, or a function that returns a color given a position.
-	 * @returns The created HeightField instance.
+	 * @param size A 2D vector representing the size of the height field in the X and Z dimensions.
+	 * @param segments A 2D vector representing the number of segments in the X and Z dimensions.
+	 * @param heights An array of heights for each vertex in the height field.
+	 * @returns The create {@link HeightField} instance.
 	 */
 	heightField = (
-		size: number,
-		segments: number,
-		heights?: number[] | ((pos: THREE.Vector2) => number) | null,
-		color?:
-			| THREE.ColorRepresentation
-			| THREE.ColorRepresentation[]
-			| ((pos: THREE.Vector2) => THREE.ColorRepresentation)
-	): HeightField => {
-		const calculatedHeights = this.calculateHeightFieldHeights(
-			heights,
-			segments,
-			size
-		);
-		const colors = this.calculateHeightFieldColors(color, segments, size);
-
-		const heightField = new HeightField(size, calculatedHeights, colors);
-		this.spawn(heightField.mesh);
-		return heightField;
-	};
-
-	/**
-	 * Calculates the heights for a height field based on the provided height definition.
-	 */
-	private calculateHeightFieldHeights(
-		heightDefinition:
-			| number[]
-			| ((pos: THREE.Vector2) => number)
-			| null
-			| undefined,
-		segments: number,
-		size: number
-	) {
-		const s = segments + 1;
-
-		if (Array.isArray(heightDefinition)) {
-			if (heightDefinition.length !== s * s) {
-				throw new Error(
-					`Height array length (${
-						heightDefinition.length
-					}) does not match height field vertex count (${s * s})`
-				);
-			}
-			return heightDefinition;
-		}
-
-		const heights: number[] = new Array(s * s);
-
-		if (heightDefinition === null || heightDefinition === undefined) {
-			heights.fill(0);
-			return heights;
-		}
-
-		for (let i = 0; i < s * s; i++) {
-			const x = ((i % s) / segments) * size;
-			const y = (Math.floor(i / s) / segments) * size;
-			heights[i] = heightDefinition(vec2(x, y));
-		}
-
-		return heights;
-	}
-
-	/**
-	 * Calculates the colors for a height field based on the provided color definition.
-	 */
-	private calculateHeightFieldColors(
-		colorDefinition:
-			| THREE.ColorRepresentation
-			| THREE.ColorRepresentation[]
-			| ((pos: THREE.Vector2) => THREE.ColorRepresentation)
-			| undefined,
-		segments: number,
-		size: number
-	) {
-		const s = segments + 1;
-
-		if (Array.isArray(colorDefinition)) {
-			if (colorDefinition.length !== s * s) {
-				throw new Error(
-					`Color array length (${
-						colorDefinition.length
-					}) does not match height field vertex count (${s * s})`
-				);
-			}
-			return colorDefinition.map(toColor);
-		}
-
-		const colors: THREE.Color[] = new Array(s * s);
-
-		if (typeof colorDefinition === "function") {
-			for (let i = 0; i < s * s; i++) {
-				const x = ((i % s) / segments) * size;
-				const y = (Math.floor(i / s) / segments) * size;
-				const c = colorDefinition(vec2(x, y));
-				colors[i] = toColor(c);
-			}
-			return colors;
-		}
-
-		const c =
-			colorDefinition === undefined
-				? this.COLOR.FOREGROUND
-				: toColor(colorDefinition);
-		colors.fill(c);
-
-		return colors;
-	}
+		size: Vec2,
+		segments: Vec2,
+		heights: Float64Array | number[]
+	) => new HeightField(this, size, segments, heights);
 
 	/**
 	 * Spawns a Three.js object into the scene. In IMMEDIATE mode, the object will be removed at the beginning of the
@@ -1314,6 +809,11 @@ export class Ctx {
 		this.camera.bottom = -height * 0.5;
 		this.camera.updateProjectionMatrix();
 	};
+
+	/**
+	 * @internal Returns the current rendering mode.
+	 */
+	__getMode = () => this.mode;
 
 	/**
 	 * Returns the absolute value of the near or far plane, whichever is larger. Used for setting range limits for
