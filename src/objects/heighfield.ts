@@ -75,8 +75,6 @@ export class HeightField extends BasicObject<THREE.PlaneGeometry> {
 			}
 		} else {
 			const c = new THREE.Color(color);
-			console.log(c);
-
 			for (let i = 0; i < pointCount; i++) {
 				colorArray[i * 3] = c.r;
 				colorArray[i * 3 + 1] = c.g;
