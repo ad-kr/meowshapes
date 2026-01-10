@@ -23,6 +23,7 @@ export class Points implements RendererObject<PointsColor> {
 		});
 
 		this.mesh = new THREE.Points(geometry, material);
+		this.color(ctx.COLOR.FOREGROUND);
 		ctx.spawn(this.mesh);
 	}
 
