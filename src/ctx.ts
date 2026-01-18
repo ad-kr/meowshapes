@@ -5,7 +5,7 @@ import {
 	type Theme,
 } from "./colorUtils.ts";
 import { THREE } from "./index.ts";
-import { toVec3, vec3, type Vec2, type Vec3 } from "./vecUtils.ts";
+import { toVec3, vec2, vec3, type Vec2, type Vec3 } from "./vecUtils.ts";
 import { Font } from "three/addons/loaders/FontLoader.js";
 import { Checkbox, Slider } from "./domElements.ts";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
@@ -93,11 +93,22 @@ export class Ctx {
 	 */
 	private orbitControls: OrbitControls | null;
 
+	/**
+	 * Current mouse position, where the center of the canvas is (0,0) and the top-right is the half-width and
+	 * half-height of the canvas.
+	 */
+	private mousePosition: THREE.Vector2;
+
 	constructor(scene: THREE.Scene, wrapper: HTMLDivElement) {
 		this.sceneRef = scene;
 		this.wrapperRef = wrapper;
 		this.updateFns = [];
 		this.garbage = [];
+		this.mousePosition = vec2(0, 0);
+
+		// TODO: Test that assumption:
+		// Event listener should be removed automatically when wrapperRef is garbage collected.
+		this.wrapperRef.addEventListener("mousemove", this.onMouseMove);
 
 		this.globalLight = new THREE.HemisphereLight(0xffffff, 0x000000, 3);
 		this.spawn(this.globalLight);
@@ -184,7 +195,7 @@ export class Ctx {
 		if (this.orbitControls === null) {
 			this.orbitControls = new OrbitControls(
 				this.camera,
-				this.wrapperRef
+				this.wrapperRef,
 			);
 
 			if (this.mode !== "IMMEDIATE") {
@@ -207,6 +218,15 @@ export class Ctx {
 		}
 
 		this.orbitControls.update();
+	};
+
+	/**
+	 * Gets the current mouse position where the center of the canvas is (0,0) and the top-right is the half-width and
+	 * half-height of the canvas.
+	 * @returns A Vector2 representing the mouse position.
+	 */
+	mouse = () => {
+		return this.mousePosition.clone();
 	};
 
 	/**
@@ -309,7 +329,7 @@ export class Ctx {
 		min: number,
 		max: number,
 		initial?: number | null,
-		config?: { step?: number; showValue?: boolean }
+		config?: { step?: number; showValue?: boolean },
 	) => {
 		const container = document.createElement("div");
 		container.classList.add("renderer-slider-container");
@@ -365,7 +385,7 @@ export class Ctx {
 			input,
 			labelContainer,
 			labelElement,
-			valueLabel
+			valueLabel,
 		);
 	};
 
@@ -382,7 +402,7 @@ export class Ctx {
 	textElement = (
 		value: string,
 		size?: number | null,
-		color?: THREE.ColorRepresentation
+		color?: THREE.ColorRepresentation,
 	) => {
 		const span = document.createElement("span");
 		span.classList.add("renderer-text-element");
@@ -417,7 +437,7 @@ export class Ctx {
 	checkbox = (
 		label: string | null,
 		initial?: boolean,
-		onToggle?: (isChecked: boolean) => void
+		onToggle?: (isChecked: boolean) => void,
 	) => {
 		const container = document.createElement("div");
 		container.classList.add("renderer-checkbox-container");
@@ -698,7 +718,7 @@ export class Ctx {
 		size?: number | null,
 		spacing?: number | null,
 		color?: THREE.ColorRepresentation | null,
-		normal?: Vec3
+		normal?: Vec3,
 	) => {
 		const gridSize = size ?? this.getCameraExtent();
 		const divisions = gridSize / (spacing ?? 50);
@@ -707,7 +727,7 @@ export class Ctx {
 			gridSize,
 			divisions,
 			color ?? this.COLOR.SECONDARY,
-			color ?? this.COLOR.SECONDARY
+			color ?? this.COLOR.SECONDARY,
 		);
 
 		const rotation = new THREE.Quaternion();
@@ -757,7 +777,7 @@ export class Ctx {
 	heightField = (
 		size: Vec2,
 		segments: Vec2,
-		heights: Float64Array | number[]
+		heights: Float64Array | number[],
 	) => new HeightField(this, size, segments, heights);
 
 	/**
@@ -840,4 +860,14 @@ export class Ctx {
 		}
 		this.garbage = [];
 	}
+
+	/**
+	 * Handles mouse move events to update the current mouse position.
+	 */
+	private onMouseMove = (event: MouseEvent) => {
+		this.mousePosition.x =
+			event.clientX - this.wrapperRef.clientWidth * 0.5;
+		this.mousePosition.y =
+			-event.clientY + this.wrapperRef.clientHeight * 0.5;
+	};
 }

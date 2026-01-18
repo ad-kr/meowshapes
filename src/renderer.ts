@@ -2,6 +2,8 @@ import { cssColors } from "./colorUtils.ts";
 import { Ctx } from "./ctx.ts";
 import { THREE } from "./index.ts";
 
+// TODO: Go over all reference fields here and the rest of the code and use WeakRef where possible/needed.
+
 export class Renderer {
 	/** The inner THREE.js WebGLRenderer instance. This is only created once per Renderer instance. */
 	private readonly inner: THREE.WebGLRenderer;

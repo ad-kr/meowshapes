@@ -16732,6 +16732,11 @@ export declare class Ctx {
 	 * Orbit controls for the camera. Initialized when orbit() is first called.
 	 */
 	private orbitControls;
+	/**
+	 * Current mouse position, where the center of the canvas is (0,0) and the top-right is the half-width and
+	 * half-height of the canvas.
+	 */
+	private mousePosition;
 	constructor(scene: THREE.Scene, wrapper: HTMLDivElement);
 	/**
 	 * Sets the current theme of the renderer, affecting colors used in the rendering context. This also sets the
@@ -16783,6 +16788,12 @@ export declare class Ctx {
 		/** Whether to enable zooming. Default is true. */
 		enableZoom?: boolean;
 	}) => void;
+	/**
+	 * Gets the current mouse position where the center of the canvas is (0,0) and the top-right is the half-width and
+	 * half-height of the canvas.
+	 * @returns A Vector2 representing the mouse position.
+	 */
+	mouse: () => THREE.Vector2;
 	/**
 	 * Registers an update function that will be called on animation iteration. Multiple update functions can be
 	 * registered at the same time. They will be called in the order they were registered.
@@ -17205,6 +17216,10 @@ export declare class Ctx {
 	 * Cleans up objects marked for removal in IMMEDIATE mode.
 	 */
 	private clearGarbage;
+	/**
+	 * Handles mouse move events to update the current mouse position.
+	 */
+	private onMouseMove;
 }
 export declare class Renderer {
 	/** The inner THREE.js WebGLRenderer instance. This is only created once per Renderer instance. */
