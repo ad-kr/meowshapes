@@ -108,7 +108,7 @@ export class Ctx {
 
 		// TODO: Test that assumption:
 		// Event listener should be removed automatically when wrapperRef is garbage collected.
-		this.wrapperRef.addEventListener("mousemove", this.onMouseMove);
+		document.body.addEventListener("mousemove", this.onMouseMove);
 
 		this.globalLight = new THREE.HemisphereLight(0xffffff, 0x000000, 3);
 		this.spawn(this.globalLight);
@@ -868,9 +868,10 @@ export class Ctx {
 	 * Handles mouse move events to update the current mouse position.
 	 */
 	private onMouseMove = (event: MouseEvent) => {
+		const bounds = this.wrapperRef.getBoundingClientRect();
 		this.mousePosition.x =
-			event.clientX - this.wrapperRef.clientWidth * 0.5;
+			event.clientX - this.wrapperRef.clientWidth * 0.5 - bounds.left;
 		this.mousePosition.y =
-			-event.clientY + this.wrapperRef.clientHeight * 0.5;
+			-event.clientY + this.wrapperRef.clientHeight * 0.5 + bounds.top;
 	};
 }
