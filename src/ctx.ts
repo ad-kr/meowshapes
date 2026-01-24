@@ -398,6 +398,7 @@ export class Ctx {
 	 * @param value The text content of the element.
 	 * @param size The font size of the text element in pixels. Defaults to 16 if not provided.
 	 * @param color The color of the text. Defaults to the context's foreground color if not provided.
+	 * @returns The created HTMLSpanElement.
 	 */
 	textElement = (
 		value: string,
@@ -410,6 +411,8 @@ export class Ctx {
 		span.style.color = toColor(color ?? this.COLOR.FOREGROUND).getStyle();
 		span.textContent = value;
 		this.wrapperRef.appendChild(span);
+
+		return span;
 	};
 
 	/**
