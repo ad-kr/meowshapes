@@ -16598,6 +16598,7 @@ declare class Points$1 implements RendererObject<PointsColor> {
 	/**
 	 * Sets the color of a specific point.
 	 * @param index Index of the point to set the color for.
+	 * @param alpha Optional alpha value for the point.
 	 * @param color New color for the point.
 	 */
 	setColor(index: number, color: THREE.ColorRepresentation, alpha?: number): void;
@@ -16782,7 +16783,7 @@ export declare class Ctx {
 		/** The auto-rotate speed. If defined, enables auto-rotation */
 		autoRotate?: number;
 		/** Whether to enable rotation. Default is true. */
-		enabledRotate?: boolean;
+		enableRotate?: boolean;
 		/** Whether to enable panning. Default is true. */
 		enablePan?: boolean;
 		/** Whether to enable zooming. Default is true. */
@@ -16891,8 +16892,9 @@ export declare class Ctx {
 	 * @param value The text content of the element.
 	 * @param size The font size of the text element in pixels. Defaults to 16 if not provided.
 	 * @param color The color of the text. Defaults to the context's foreground color if not provided.
+	 * @returns The created HTMLSpanElement.
 	 */
-	textElement: (value: string, size?: number | null, color?: THREE.ColorRepresentation) => void;
+	textElement: (value: string, size?: number | null, color?: THREE.ColorRepresentation) => HTMLSpanElement;
 	/**
 	 * Creates a checkbox element and adds it to the renderer's DOM wrapper.
 	 * ### Example
@@ -16915,7 +16917,7 @@ export declare class Ctx {
 	 * @param onToggle The callback function to be executed when the checkbox state changes.
 	 * @returns A Checkbox object containing references to the created DOM elements and methods to get/set the checkbox state.
 	 */
-	checkbox: (label: string | null, initial?: boolean, onToggle?: (isChecked: boolean) => void) => Checkbox;
+	checkbox: (label: string | null, initial?: boolean | null, onToggle?: (isChecked: boolean) => void) => Checkbox;
 	/**
 	 * Creates and adds a line between two points to the scene.
 	 * ### Example
@@ -17195,10 +17197,6 @@ export declare class Ctx {
 	 * @internal Do not call this method directly. The Renderer handles this internally.
 	 */
 	__tick(dt: number, elapsed: number): void;
-	/**
-	 * @internal Checks if there are any registered update functions.
-	 */
-	__hasUpdateFns: () => boolean;
 	/**
 	 * @internal Updates camera bounds given width and height of the renderer.
 	 */

@@ -186,7 +186,7 @@ export class Ctx {
 		/** The auto-rotate speed. If defined, enables auto-rotation */
 		autoRotate?: number;
 		/** Whether to enable rotation. Default is true. */
-		enabledRotate?: boolean;
+		enableRotate?: boolean;
 		/** Whether to enable panning. Default is true. */
 		enablePan?: boolean;
 		/** Whether to enable zooming. Default is true. */
@@ -212,7 +212,7 @@ export class Ctx {
 
 			this.orbitControls.autoRotate = true;
 			this.orbitControls.autoRotateSpeed = config.autoRotate ?? 0;
-			this.orbitControls.enableRotate = config.enabledRotate ?? true;
+			this.orbitControls.enableRotate = config.enableRotate ?? true;
 			this.orbitControls.enablePan = config.enablePan ?? true;
 			this.orbitControls.enableZoom = config.enableZoom ?? true;
 		}
