@@ -1,13 +1,14 @@
 {
-    "name": "vectors",
-    "version": "1.0.0",
-    "description": "",
+    "name": "meowshapes",
+    "version": "0.0.1",
+    "description": "A simple library for easy mathematical visualizations",
     "license": "ISC",
-    "author": "",
+    "author": "ad-kr",
     "type": "module",
+    "repository": "https://github.com/ad-kr/meowshapes",
     "main": "src/index.ts",
     "scripts": {
-        "build": "npx dts-bundle-generator --no-check --external-inlines=@types/three --out-file dist/vectors.d.ts ./src/index.ts && npx esbuild src/index.ts --bundle --format=iife --minify --global-name=Runner --outfile=dist/vectors.min.js"
+        "build": "npx dts-bundle-generator --no-check --external-inlines=@types/three --out-file dist/meowshapes.d.ts ./src/index.ts && npx esbuild src/index.ts --bundle --format=iife --minify --global-name=Runner --outfile=dist/meowshapes.min.js"
     },
     "dependencies": {
         "three": "^0.182.0",
@@ -17,8 +18,8 @@
         ".": {
             "import": "./src/index.ts"
         },
-        "./dist/vectors.d.ts": "./dist/vectors.d.ts",
-        "./dist/vectors.min.js": "./dist/vectors.min.js"
+        "./dist/meowshapes.d.ts": "./dist/meowshapes.d.ts",
+        "./dist/meowshapes.min.js": "./dist/meowshapes.min.js"
     },
     "devDependencies": {
         "@types/three": "^0.182.0"
