@@ -17206,6 +17206,10 @@ export declare class Ctx {
 	 */
 	__getMode: () => "RETAINED" | "IMMEDIATE";
 	/**
+	 * @internal Cleans up event listeners and other resources when the context is disposed.
+	 */
+	__dispose(): void;
+	/**
 	 * Returns the absolute value of the near or far plane, whichever is larger. Used for setting range limits for
 	 * graphs and similar objects. (Not and ideal solution, but works for now.)
 	 */
@@ -17226,6 +17230,8 @@ export declare class Renderer {
 	private readonly wrapper;
 	/** The ResizeObserver to handle resizing of the renderer. */
 	private readonly resizeObserver;
+	/** The context associated with this renderer. */
+	private readonly ctx;
 	constructor(setup: (ctx: Ctx) => void);
 	/**
 	 * Returns the DOM element used by the inner THREE.js WebGLRenderer. Add this to your document to display the

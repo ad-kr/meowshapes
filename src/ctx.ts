@@ -106,8 +106,6 @@ export class Ctx {
 		this.garbage = [];
 		this.mousePosition = vec2(0, 0);
 
-		// TODO: Test that assumption:
-		// Event listener should be removed automatically when wrapperRef is garbage collected.
 		document.body.addEventListener("mousemove", this.onMouseMove);
 
 		this.globalLight = new THREE.HemisphereLight(0xffffff, 0x000000, 3);
@@ -832,6 +830,13 @@ export class Ctx {
 	 * @internal Returns the current rendering mode.
 	 */
 	__getMode = () => this.mode;
+
+	/**
+	 * @internal Cleans up event listeners and other resources when the context is disposed.
+	 */
+	__dispose() {
+		document.body.removeEventListener("mousemove", this.onMouseMove);
+	}
 
 	/**
 	 * Returns the absolute value of the near or far plane, whichever is larger. Used for setting range limits for

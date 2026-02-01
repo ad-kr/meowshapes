@@ -2,8 +2,6 @@ import { cssColors } from "./colorUtils.ts";
 import { Ctx } from "./ctx.ts";
 import { THREE } from "./index.ts";
 
-// TODO: Go over all reference fields here and the rest of the code and use WeakRef where possible/needed.
-
 export class Renderer {
 	/** The inner THREE.js WebGLRenderer instance. This is only created once per Renderer instance. */
 	private readonly inner: THREE.WebGLRenderer;
@@ -13,6 +11,9 @@ export class Renderer {
 
 	/** The ResizeObserver to handle resizing of the renderer. */
 	private readonly resizeObserver: ResizeObserver;
+
+	/** The context associated with this renderer. */
+	private readonly ctx: Ctx;
 
 	constructor(setup: (ctx: Ctx) => void) {
 		this.inner = new THREE.WebGLRenderer({ antialias: true });
@@ -161,18 +162,18 @@ export class Renderer {
 		}
 
 		const scene = new THREE.Scene();
-		const ctx = new Ctx(scene, this.wrapper);
+		this.ctx = new Ctx(scene, this.wrapper);
 
-		setup(ctx);
+		setup(this.ctx);
 
 		this.resizeObserver = new ResizeObserver(() => {
 			const width = this.wrapper.clientWidth;
 			const height = this.wrapper.clientHeight;
 
-			ctx.__setCameraBounds(width, height);
+			this.ctx.__setCameraBounds(width, height);
 
 			this.inner.setSize(width, height);
-			this.inner.render(scene, ctx.camera);
+			this.inner.render(scene, this.ctx.camera);
 		});
 		this.resizeObserver.observe(this.wrapper);
 
@@ -189,8 +190,8 @@ export class Renderer {
 			}
 			lastMs = elapsedMs;
 
-			ctx.__tick(deltaSecs, elapsedSecs);
-			this.inner.render(scene, ctx.camera);
+			this.ctx.__tick(deltaSecs, elapsedSecs);
+			this.inner.render(scene, this.ctx.camera);
 		});
 	}
 
@@ -210,6 +211,8 @@ export class Renderer {
 	 * anymore. Also removes the renderer's DOM element from the document if it was added.
 	 */
 	dispose() {
+		this.ctx.__dispose();
+
 		// this.inner.dispose() alone does not free up WebGL contexts, so we force a context loss first.
 		this.inner.forceContextLoss();
 
