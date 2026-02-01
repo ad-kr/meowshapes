@@ -20,7 +20,7 @@ export class Graph implements RendererObject<GraphColor> {
 	constructor(
 		ctx: Ctx,
 		func: (x: number) => number,
-		range?: [number, number]
+		range?: [number, number],
 	) {
 		const defaultExtentHalf = 5000 / ctx.zoom();
 		const from = range !== undefined ? range[0] : -defaultExtentHalf;
@@ -41,7 +41,7 @@ export class Graph implements RendererObject<GraphColor> {
 
 			if (isNaN(y) || !isFinite(y)) {
 				throw new Error(
-					`Graph function returned invalid value at x=${x}: ${y}`
+					`Graph function returned invalid value at x=${x}: ${y}`,
 				);
 			}
 

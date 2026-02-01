@@ -39,7 +39,7 @@ export class Points implements RendererObject<PointsColor> {
 		if (Array.isArray(color)) {
 			if (color.length !== pointCount) {
 				throw new Error(
-					`Color array length mismatch. Expected ${pointCount}, got ${color.length}.`
+					`Color array length mismatch. Expected ${pointCount}, got ${color.length}.`,
 				);
 			}
 
@@ -62,7 +62,7 @@ export class Points implements RendererObject<PointsColor> {
 
 		this.mesh.geometry.setAttribute(
 			"color",
-			new THREE.Float32BufferAttribute(colorArray, 4)
+			new THREE.Float32BufferAttribute(colorArray, 4),
 		);
 
 		return this;
