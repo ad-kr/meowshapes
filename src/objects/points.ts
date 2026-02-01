@@ -133,6 +133,7 @@ export class Points implements RendererObject<PointsColor> {
 	/**
 	 * Sets the color of a specific point.
 	 * @param index Index of the point to set the color for.
+	 * @param alpha Optional alpha value for the point.
 	 * @param color New color for the point.
 	 */
 	setColor(index: number, color: THREE.ColorRepresentation, alpha?: number) {
