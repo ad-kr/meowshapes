@@ -818,11 +818,6 @@ export class Ctx {
 	}
 
 	/**
-	 * @internal Checks if there are any registered update functions.
-	 */
-	__hasUpdateFns = () => this.updateFns.length > 0;
-
-	/**
 	 * @internal Updates camera bounds given width and height of the renderer.
 	 */
 	__setCameraBounds = (width: number, height: number) => {

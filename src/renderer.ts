@@ -178,8 +178,6 @@ export class Renderer {
 
 		this.inner.setPixelRatio(window.devicePixelRatio);
 
-		if (!ctx.__hasUpdateFns()) return;
-
 		let lastMs: number | null = null;
 		let elapsedSecs = 0;
 
