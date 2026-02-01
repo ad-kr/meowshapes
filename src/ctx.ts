@@ -439,7 +439,7 @@ export class Ctx {
 	 */
 	checkbox = (
 		label: string | null,
-		initial?: boolean,
+		initial?: boolean | null,
 		onToggle?: (isChecked: boolean) => void,
 	) => {
 		const container = document.createElement("div");
