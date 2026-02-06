@@ -238,7 +238,7 @@ export class Renderer {
 
 		document.addEventListener(
 			"visibilitychange",
-			this.onPageVisibilityChange.bind(this),
+			this.onPageVisibilityChange,
 		);
 
 		this.inner.setPixelRatio(window.devicePixelRatio);
@@ -312,9 +312,10 @@ export class Renderer {
 		);
 	}
 
-	private onPageVisibilityChange() {
+	/** Handles the page visibility change event to reset timing when the page becomes hidden */
+	private onPageVisibilityChange = () => {
 		if (document.hidden) {
 			this.lastMs = null; // reset lastMs so that we don't get a huge delta when we become visible again
 		}
-	}
+	};
 }
