@@ -2,6 +2,29 @@ import { cssColors } from "./colorUtils.ts";
 import { Ctx } from "./ctx.ts";
 import { THREE } from "./index.ts";
 
+type RendererOptions = {
+	focusBehaviour?: FocusBehaviourOptions;
+};
+
+type FocusBehaviourOptions = {
+	/**
+	 * Determines whether the update loop only runs when the renderer is hovered. The first update is always executed
+	 * regardless of this setting.
+	 *
+	 * Default is false. */
+	onlyWhenHovered?: boolean;
+	/**
+	 * Determines whether the update loop should stop when the renderer is not visible in the viewport.
+	 *
+	 * Can be set to an object with an `enabled` property and an optional `threshold` property to specify the visibility
+	 * threshold for the IntersectionObserver. The `threshold` is a number between 0 and 1 that indicates what
+	 * percentage of the renderer's area must be visible for it to be considered visible. The default threshold is 0.25
+	 * (25% visibility).
+	 *
+	 * Default is true. */
+	stopWhenNotVisible?: boolean | { enabled: boolean; threshold?: number };
+};
+
 export class Renderer {
 	/** The inner THREE.js WebGLRenderer instance. This is only created once per Renderer instance. */
 	private readonly inner: THREE.WebGLRenderer;
@@ -12,11 +35,24 @@ export class Renderer {
 	/** The ResizeObserver to handle resizing of the renderer. */
 	private readonly resizeObserver: ResizeObserver;
 
+	/** The IntersectionObserver to handle visibility changes of the renderer. */
+	private readonly intersectionObserver: IntersectionObserver;
+
 	/** The context associated with this renderer. */
 	private readonly ctx: Ctx;
 
-	constructor(setup: (ctx: Ctx) => void) {
+	/** The options for the renderer's behavior. */
+	private readonly options: RendererOptions;
+
+	/** Whether the renderer is currently visible in the viewport. Not to be confused with `isPageVisible`. */
+	private isVisible: boolean | undefined;
+
+	/** The timestamp of the last update in milliseconds. */
+	private lastMs: number | null;
+
+	constructor(setup: (ctx: Ctx) => void, options?: RendererOptions) {
 		this.inner = new THREE.WebGLRenderer({ antialias: true });
+		this.options = this.getRendererOptions(options);
 
 		this.wrapper = document.createElement("div");
 		this.wrapper.className = "renderer-wrapper";
@@ -28,7 +64,7 @@ export class Renderer {
 			style.id = stylesId;
 
 			// Some remarks about styling:
-			// - We use margin-top and margin-left on children instead of gap to also add some spcaing from the edges
+			// - We use margin-top and margin-left on children instead of gap to also add some spacing from the edges
 			// without having to add padding to the wrapper. This way we can keep canvas and other elements in the same
 			// wrapper.
 			style.innerText = `
@@ -166,32 +202,47 @@ export class Renderer {
 
 		setup(this.ctx);
 
-		this.resizeObserver = new ResizeObserver(() => {
-			const width = this.wrapper.clientWidth;
-			const height = this.wrapper.clientHeight;
+		this.resizeObserver = this.getResizeObserver(scene);
+		this.intersectionObserver = this.getIntersectionObserver();
 
-			this.ctx.__setCameraBounds(width, height);
-
-			this.inner.setSize(width, height);
-			this.inner.render(scene, this.ctx.camera);
-		});
-		this.resizeObserver.observe(this.wrapper);
+		document.addEventListener(
+			"visibilitychange",
+			this.onPageVisibilityChange,
+		);
 
 		this.inner.setPixelRatio(window.devicePixelRatio);
 
-		let lastMs: number | null = null;
+		let hasRenderedOnce = false;
+
+		this.lastMs = null;
 		let elapsedSecs = 0;
 
 		this.inner.setAnimationLoop((elapsedMs) => {
+			const isStoppedByHoverState =
+				this.options.focusBehaviour?.onlyWhenHovered &&
+				!this.wrapper.matches(":hover");
+			const isStoppedByVisibility =
+				this.options.focusBehaviour?.stopWhenNotVisible &&
+				!this.isVisible;
+
+			const isStopped = isStoppedByVisibility || isStoppedByHoverState;
+
+			if (hasRenderedOnce && isStopped) {
+				this.lastMs = null; // reset lastMs so that we don't get a huge delta when we become visible again
+				return;
+			}
+
 			let deltaSecs = 0;
-			if (lastMs !== null) {
-				deltaSecs = (elapsedMs - lastMs) / 1000;
+			if (this.lastMs !== null) {
+				deltaSecs = (elapsedMs - this.lastMs) / 1000;
 				elapsedSecs += deltaSecs;
 			}
-			lastMs = elapsedMs;
+			this.lastMs = elapsedMs;
 
 			this.ctx.__tick(deltaSecs, elapsedSecs);
 			this.inner.render(scene, this.ctx.camera);
+
+			hasRenderedOnce = true;
 		});
 	}
 
@@ -218,9 +269,73 @@ export class Renderer {
 
 		this.inner.dispose();
 		this.resizeObserver.disconnect();
+		this.intersectionObserver.disconnect();
 
 		if (this.wrapper.parentElement) {
 			this.wrapper.parentElement.removeChild(this.wrapper);
 		}
+
+		document.removeEventListener(
+			"visibilitychange",
+			this.onPageVisibilityChange,
+		);
 	}
+
+	/** Returns the renderer options with default values applied if configuration options are not provided */
+	private getRendererOptions(
+		options: RendererOptions | undefined,
+	): RendererOptions {
+		return {
+			focusBehaviour: {
+				onlyWhenHovered:
+					options?.focusBehaviour?.onlyWhenHovered ?? false,
+				stopWhenNotVisible:
+					options?.focusBehaviour?.stopWhenNotVisible ?? true,
+			},
+		};
+	}
+
+	/** Sets up and returns the ResizeObserver for the renderer */
+	private getResizeObserver(scene: THREE.Scene): ResizeObserver {
+		const resizeObserver = new ResizeObserver(() => {
+			const width = this.wrapper.clientWidth;
+			const height = this.wrapper.clientHeight;
+
+			this.ctx.__setCameraBounds(width, height);
+
+			this.inner.setSize(width, height);
+			this.inner.render(scene, this.ctx.camera);
+		});
+		resizeObserver.observe(this.wrapper);
+
+		return resizeObserver;
+	}
+
+	/** Sets up and returns the IntersectionObserver for the renderer */
+	private getIntersectionObserver(): IntersectionObserver {
+		const scrollThreshold =
+			typeof this.options.focusBehaviour?.stopWhenNotVisible === "object"
+				? (this.options.focusBehaviour.stopWhenNotVisible.threshold ??
+					0.25)
+				: 0.25;
+
+		const intersectionObserver = new IntersectionObserver(
+			([entry]) => {
+				this.isVisible = entry?.isIntersecting;
+			},
+			{
+				threshold: scrollThreshold,
+			},
+		);
+		intersectionObserver.observe(this.wrapper);
+
+		return intersectionObserver;
+	}
+
+	/** Handles the page visibility change event to reset timing when the page becomes hidden */
+	private onPageVisibilityChange = () => {
+		if (document.hidden) {
+			this.lastMs = null; // reset lastMs so that we don't get a huge delta when we become visible again
+		}
+	};
 }

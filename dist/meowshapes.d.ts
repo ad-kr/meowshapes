@@ -17223,6 +17223,30 @@ export declare class Ctx {
 	 */
 	private onMouseMove;
 }
+export type RendererOptions = {
+	focusBehaviour?: FocusBehaviourOptions;
+};
+export type FocusBehaviourOptions = {
+	/**
+	 * Determines whether the update loop only runs when the renderer is hovered. The first update is always executed
+	 * regardless of this setting.
+	 *
+	 * Default is false. */
+	onlyWhenHovered?: boolean;
+	/**
+	 * Determines whether the update loop should stop when the renderer is not visible in the viewport.
+	 *
+	 * Can be set to an object with an `enabled` property and an optional `threshold` property to specify the visibility
+	 * threshold for the IntersectionObserver. The `threshold` is a number between 0 and 1 that indicates what
+	 * percentage of the renderer's area must be visible for it to be considered visible. The default threshold is 0.25
+	 * (25% visibility).
+	 *
+	 * Default is true. */
+	stopWhenNotVisible?: boolean | {
+		enabled: boolean;
+		threshold?: number;
+	};
+};
 export declare class Renderer {
 	/** The inner THREE.js WebGLRenderer instance. This is only created once per Renderer instance. */
 	private readonly inner;
@@ -17230,9 +17254,17 @@ export declare class Renderer {
 	private readonly wrapper;
 	/** The ResizeObserver to handle resizing of the renderer. */
 	private readonly resizeObserver;
+	/** The IntersectionObserver to handle visibility changes of the renderer. */
+	private readonly intersectionObserver;
 	/** The context associated with this renderer. */
 	private readonly ctx;
-	constructor(setup: (ctx: Ctx) => void);
+	/** The options for the renderer's behavior. */
+	private readonly options;
+	/** Whether the renderer is currently visible in the viewport. Not to be confused with `isPageVisible`. */
+	private isVisible;
+	/** The timestamp of the last update in milliseconds. */
+	private lastMs;
+	constructor(setup: (ctx: Ctx) => void, options?: RendererOptions);
 	/**
 	 * Returns the DOM element used by the inner THREE.js WebGLRenderer. Add this to your document to display the
 	 * rendered content. The element tries to fill the size of its parent element.
@@ -17248,6 +17280,14 @@ export declare class Renderer {
 	 * anymore. Also removes the renderer's DOM element from the document if it was added.
 	 */
 	dispose(): void;
+	/** Returns the renderer options with default values applied if configuration options are not provided */
+	private getRendererOptions;
+	/** Sets up and returns the ResizeObserver for the renderer */
+	private getResizeObserver;
+	/** Sets up and returns the IntersectionObserver for the renderer */
+	private getIntersectionObserver;
+	/** Handles the page visibility change event to reset timing when the page becomes hidden */
+	private onPageVisibilityChange;
 }
 /**
  * Returns a simplex noise value at the given position. Position can be a number, Vec2 or Vec3.
