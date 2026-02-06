@@ -52,14 +52,7 @@ export class Renderer {
 
 	constructor(setup: (ctx: Ctx) => void, options?: RendererOptions) {
 		this.inner = new THREE.WebGLRenderer({ antialias: true });
-		this.options = {
-			focusBehaviour: {
-				onlyWhenHovered:
-					options?.focusBehaviour?.onlyWhenHovered ?? false,
-				stopWhenNotVisible:
-					options?.focusBehaviour?.stopWhenNotVisible ?? true,
-			},
-		};
+		this.options = this.getRendererOptions(options);
 
 		this.wrapper = document.createElement("div");
 		this.wrapper.className = "renderer-wrapper";
@@ -310,6 +303,20 @@ export class Renderer {
 			"visibilitychange",
 			this.onPageVisibilityChange,
 		);
+	}
+
+	/** Returns the renderer options with default values applied if configuration options are not provided */
+	private getRendererOptions(
+		options: RendererOptions | undefined,
+	): RendererOptions {
+		return {
+			focusBehaviour: {
+				onlyWhenHovered:
+					options?.focusBehaviour?.onlyWhenHovered ?? false,
+				stopWhenNotVisible:
+					options?.focusBehaviour?.stopWhenNotVisible ?? true,
+			},
+		};
 	}
 
 	/** Handles the page visibility change event to reset timing when the page becomes hidden */
