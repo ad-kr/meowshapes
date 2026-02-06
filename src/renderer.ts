@@ -306,7 +306,7 @@ export class Renderer {
 			this.inner.setSize(width, height);
 			this.inner.render(scene, this.ctx.camera);
 		});
-		this.resizeObserver.observe(this.wrapper);
+		resizeObserver.observe(this.wrapper);
 
 		return resizeObserver;
 	}
