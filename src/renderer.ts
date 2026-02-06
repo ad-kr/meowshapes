@@ -202,32 +202,8 @@ export class Renderer {
 
 		setup(this.ctx);
 
-		this.resizeObserver = new ResizeObserver(() => {
-			const width = this.wrapper.clientWidth;
-			const height = this.wrapper.clientHeight;
-
-			this.ctx.__setCameraBounds(width, height);
-
-			this.inner.setSize(width, height);
-			this.inner.render(scene, this.ctx.camera);
-		});
-		this.resizeObserver.observe(this.wrapper);
-
-		const scrollThreshold =
-			typeof this.options.focusBehaviour?.stopWhenNotVisible === "object"
-				? (this.options.focusBehaviour.stopWhenNotVisible.threshold ??
-					0.25)
-				: 0.25;
-
-		this.intersectionObserver = new IntersectionObserver(
-			([entry]) => {
-				this.isVisible = entry?.isIntersecting;
-			},
-			{
-				threshold: scrollThreshold,
-			},
-		);
-		this.intersectionObserver.observe(this.wrapper);
+		this.resizeObserver = this.getResizeObserver(scene);
+		this.intersectionObserver = this.getIntersectionObserver();
 
 		document.addEventListener(
 			"visibilitychange",
@@ -317,6 +293,43 @@ export class Renderer {
 					options?.focusBehaviour?.stopWhenNotVisible ?? true,
 			},
 		};
+	}
+
+	/** Sets up and returns the ResizeObserver for the renderer */
+	private getResizeObserver(scene: THREE.Scene): ResizeObserver {
+		const resizeObserver = new ResizeObserver(() => {
+			const width = this.wrapper.clientWidth;
+			const height = this.wrapper.clientHeight;
+
+			this.ctx.__setCameraBounds(width, height);
+
+			this.inner.setSize(width, height);
+			this.inner.render(scene, this.ctx.camera);
+		});
+		this.resizeObserver.observe(this.wrapper);
+
+		return resizeObserver;
+	}
+
+	/** Sets up and returns the IntersectionObserver for the renderer */
+	private getIntersectionObserver(): IntersectionObserver {
+		const scrollThreshold =
+			typeof this.options.focusBehaviour?.stopWhenNotVisible === "object"
+				? (this.options.focusBehaviour.stopWhenNotVisible.threshold ??
+					0.25)
+				: 0.25;
+
+		const intersectionObserver = new IntersectionObserver(
+			([entry]) => {
+				this.isVisible = entry?.isIntersecting;
+			},
+			{
+				threshold: scrollThreshold,
+			},
+		);
+		intersectionObserver.observe(this.wrapper);
+
+		return intersectionObserver;
 	}
 
 	/** Handles the page visibility change event to reset timing when the page becomes hidden */
