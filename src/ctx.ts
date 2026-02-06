@@ -197,8 +197,8 @@ export class Ctx {
 			);
 
 			if (this.mode !== "IMMEDIATE") {
-				this.update(() => {
-					this.orbitControls!.update();
+				this.update((dt) => {
+					this.orbitControls!.update(dt);
 				});
 			}
 		}
