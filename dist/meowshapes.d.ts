@@ -16720,7 +16720,7 @@ export declare class Ctx {
 	/**
 	 * The current theme of the context. This can be used to adjust colors and styles based on light or dark mode.
 	 */
-	private theme;
+	private _theme;
 	/**
 	 * The font used for rendering text. Loaded on demand.
 	 */
@@ -16740,11 +16740,13 @@ export declare class Ctx {
 	private mousePosition;
 	constructor(scene: THREE.Scene, wrapper: HTMLDivElement);
 	/**
-	 * Sets the current theme of the renderer, affecting colors used in the rendering context. This also sets the
-	 * background to match the theme.
+	 * Returns the current theme of the renderer, which is either "light" or "dark". If a value is provided, it sets
+	 * the theme to that value.
+	 *
 	 * @param theme The theme to set.
+	 * @return The current theme of the renderer.
 	 */
-	setTheme: (theme: Theme) => void;
+	theme: (theme?: Theme) => Theme;
 	/**
 	 * Sets global light intensity
 	 * @param intensity Light intensity. Default is 3.
