@@ -76,7 +76,7 @@ export class Ctx {
 	/**
 	 * The current theme of the context. This can be used to adjust colors and styles based on light or dark mode.
 	 */
-	private theme: Theme = "light";
+	private _theme: Theme = "light";
 
 	/**
 	 * The font used for rendering text. Loaded on demand.
@@ -123,13 +123,19 @@ export class Ctx {
 	}
 
 	/**
-	 * Sets the current theme of the renderer, affecting colors used in the rendering context. This also sets the
-	 * background to match the theme.
+	 * Returns the current theme of the renderer, which is either "light" or "dark". If a value is provided, it sets
+	 * the theme to that value.
+	 *
 	 * @param theme The theme to set.
+	 * @return The current theme of the renderer.
 	 */
-	setTheme = (theme: Theme) => {
-		this.theme = theme;
-		this.background(this.COLOR.BACKGROUND);
+	theme = (theme?: Theme) => {
+		if (theme !== undefined) {
+			this._theme = theme;
+			this.background(this.COLOR.BACKGROUND);
+		}
+
+		return this._theme;
 	};
 
 	/**
@@ -254,7 +260,7 @@ export class Ctx {
 	 * A collection of commonly used colors based on the current theme.
 	 */
 	get COLOR() {
-		return this.theme === "light" ? lightColors : darkColors;
+		return this.theme() === "light" ? lightColors : darkColors;
 	}
 
 	/**
@@ -293,7 +299,7 @@ export class Ctx {
 		button.onclick = onClick;
 
 		button.classList.add("renderer-button");
-		if (this.theme === "dark") {
+		if (this.theme() === "dark") {
 			button.classList.add("dark");
 		}
 
@@ -332,7 +338,7 @@ export class Ctx {
 		const container = document.createElement("div");
 		container.classList.add("renderer-slider-container");
 
-		if (this.theme === "dark") {
+		if (this.theme() === "dark") {
 			container.classList.add("dark");
 		}
 
@@ -442,7 +448,7 @@ export class Ctx {
 	) => {
 		const container = document.createElement("div");
 		container.classList.add("renderer-checkbox-container");
-		if (this.theme === "dark") {
+		if (this.theme() === "dark") {
 			container.classList.add("dark");
 		}
 
