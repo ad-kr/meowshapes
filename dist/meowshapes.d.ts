@@ -17227,6 +17227,13 @@ export declare class Ctx {
 }
 export type RendererOptions = {
 	focusBehaviour?: FocusBehaviourOptions;
+	/**
+	 * Determines whether the renderer's canvas should preserve its drawing buffer. This is necessary for certain
+	 * features like taking snapshots of the renderer's content using the `getImage` method or setting the renderer to a
+	 * static state using the `setStatic` method. Enabling this option may have performance implications. Default is
+	 * false.
+	 */
+	preserveDrawingBuffer?: boolean;
 };
 export type FocusBehaviourOptions = {
 	/**
@@ -17288,9 +17295,12 @@ export declare class Renderer {
 	 * Returns an HTMLImageElement containing a snapshot of the current renderer content. This can be used to save the
 	 * renderer output as an image or to use it elsewhere in the DOM. Note that the image is generated from the current
 	 * content of the renderer's canvas, so it reflects the current state of the scene.
+	 *
+	 * ### Important ###
+	 * This will only work if the `preserveDrawingBuffer` option is enabled.
 	 * @returns An HTMLImageElement with the renderer's current content as its source.
 	 */
-	getImage(): HTMLImageElement;
+	getImage: () => HTMLImageElement;
 	/**
 	 * Sets the renderer to a static state, where the update loop is paused and a snapshot of the current content is
 	 * displayed instead. This can be useful for performance optimization when the scene does not need to be updated
@@ -17299,9 +17309,12 @@ export declare class Renderer {
 	 *
 	 * This will however prevent the renderer from being resizable and will not update the snapshot when the scene
 	 * changes.
+	 *
+	 * ### Important ###
+	 * This will only work if the `preserveDrawingBuffer` option is enabled.
 	 * @param isStatic Whether to set the renderer to a static state (true) or back to a dynamic state (false).
 	 */
-	setStatic(isStatic: boolean): void;
+	setStatic: (isStatic: boolean) => void;
 	/** Returns the renderer options with default values applied if configuration options are not provided */
 	private getRendererOptions;
 	/** Sets up and returns the ResizeObserver for the renderer */
