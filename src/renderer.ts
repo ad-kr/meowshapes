@@ -281,6 +281,19 @@ export class Renderer {
 		);
 	}
 
+	/**
+	 * Returns an HTMLImageElement containing a snapshot of the current renderer content. This can be used to save the
+	 * renderer output as an image or to use it elsewhere in the DOM. Note that the image is generated from the current
+	 * content of the renderer's canvas, so it reflects the current state of the scene.
+	 * @returns An HTMLImageElement with the renderer's current content as its source.
+	 */
+	getImage(): HTMLImageElement {
+		const imageData = this.inner.domElement.toDataURL();
+		const image = new Image();
+		image.src = imageData;
+		return image;
+	}
+
 	/** Returns the renderer options with default values applied if configuration options are not provided */
 	private getRendererOptions(
 		options: RendererOptions | undefined,
