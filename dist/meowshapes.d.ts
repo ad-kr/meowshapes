@@ -17300,7 +17300,7 @@ export declare class Renderer {
 	 * This will only work if the `preserveDrawingBuffer` option is enabled.
 	 * @returns An HTMLImageElement with the renderer's current content as its source.
 	 */
-	getImage: () => HTMLImageElement;
+	getImage(): HTMLImageElement;
 	/**
 	 * Sets the renderer to a static state, where the update loop is paused and a snapshot of the current content is
 	 * displayed instead. This can be useful for performance optimization when the scene does not need to be updated
@@ -17314,7 +17314,7 @@ export declare class Renderer {
 	 * This will only work if the `preserveDrawingBuffer` option is enabled.
 	 * @param isStatic Whether to set the renderer to a static state (true) or back to a dynamic state (false).
 	 */
-	setStatic: (isStatic: boolean) => void;
+	setStatic(isStatic: boolean): void;
 	/** Returns the renderer options with default values applied if configuration options are not provided */
 	private getRendererOptions;
 	/** Sets up and returns the ResizeObserver for the renderer */
