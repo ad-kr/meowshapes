@@ -17254,6 +17254,8 @@ export declare class Renderer {
 	private readonly inner;
 	/** The wrapper div containing the renderer's DOM element. */
 	private readonly wrapper;
+	/** The static image element used when the renderer is in a static state. */
+	private staticImage;
 	/** The ResizeObserver to handle resizing of the renderer. */
 	private readonly resizeObserver;
 	/** The IntersectionObserver to handle visibility changes of the renderer. */
@@ -17282,6 +17284,24 @@ export declare class Renderer {
 	 * anymore. Also removes the renderer's DOM element from the document if it was added.
 	 */
 	dispose(): void;
+	/**
+	 * Returns an HTMLImageElement containing a snapshot of the current renderer content. This can be used to save the
+	 * renderer output as an image or to use it elsewhere in the DOM. Note that the image is generated from the current
+	 * content of the renderer's canvas, so it reflects the current state of the scene.
+	 * @returns An HTMLImageElement with the renderer's current content as its source.
+	 */
+	getImage(): HTMLImageElement;
+	/**
+	 * Sets the renderer to a static state, where the update loop is paused and a snapshot of the current content is
+	 * displayed instead. This can be useful for performance optimization when the scene does not need to be updated
+	 * frequently, or when you want to display a static image of the scene without the overhead of rendering it in
+	 * real-time.
+	 *
+	 * This will however prevent the renderer from being resizable and will not update the snapshot when the scene
+	 * changes.
+	 * @param isStatic Whether to set the renderer to a static state (true) or back to a dynamic state (false).
+	 */
+	setStatic(isStatic: boolean): void;
 	/** Returns the renderer options with default values applied if configuration options are not provided */
 	private getRendererOptions;
 	/** Sets up and returns the ResizeObserver for the renderer */

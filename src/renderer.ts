@@ -32,6 +32,9 @@ export class Renderer {
 	/** The wrapper div containing the renderer's DOM element. */
 	private readonly wrapper: HTMLDivElement;
 
+	/** The static image element used when the renderer is in a static state. */
+	private staticImage: HTMLImageElement | null;
+
 	/** The ResizeObserver to handle resizing of the renderer. */
 	private readonly resizeObserver: ResizeObserver;
 
@@ -57,6 +60,8 @@ export class Renderer {
 		this.wrapper = document.createElement("div");
 		this.wrapper.className = "renderer-wrapper";
 		this.wrapper.appendChild(this.inner.domElement);
+
+		this.staticImage = null;
 
 		const stylesId = "renderer-styles";
 		if (document.getElementById(stylesId) === null) {
@@ -85,7 +90,7 @@ export class Renderer {
                     margin-top: 16px;
                     margin-left: 16px;
                 }
-                .renderer-wrapper > canvas {
+                .renderer-wrapper > canvas, .renderer-static-image {
                     position: absolute;
                     z-index: -1;
                     margin: 0;
@@ -224,8 +229,12 @@ export class Renderer {
 			const isStoppedByVisibility =
 				this.options.focusBehaviour?.stopWhenNotVisible &&
 				!this.isVisible;
+			const isStoppedByStaticState = this.staticImage !== null;
 
-			const isStopped = isStoppedByVisibility || isStoppedByHoverState;
+			const isStopped =
+				isStoppedByVisibility ||
+				isStoppedByHoverState ||
+				isStoppedByStaticState;
 
 			if (hasRenderedOnce && isStopped) {
 				this.lastMs = null; // reset lastMs so that we don't get a huge delta when we become visible again
@@ -292,6 +301,38 @@ export class Renderer {
 		const image = new Image();
 		image.src = imageData;
 		return image;
+	}
+
+	/**
+	 * Sets the renderer to a static state, where the update loop is paused and a snapshot of the current content is
+	 * displayed instead. This can be useful for performance optimization when the scene does not need to be updated
+	 * frequently, or when you want to display a static image of the scene without the overhead of rendering it in
+	 * real-time.
+	 *
+	 * This will however prevent the renderer from being resizable and will not update the snapshot when the scene
+	 * changes.
+	 * @param isStatic Whether to set the renderer to a static state (true) or back to a dynamic state (false).
+	 */
+	setStatic(isStatic: boolean) {
+		if (isStatic && this.staticImage === null) {
+			const image = this.getImage();
+			image.className = "renderer-static-image";
+			this.staticImage = image;
+
+			this.inner.domElement.style.display = "none";
+			this.inner.forceContextLoss();
+
+			this.wrapper.appendChild(image);
+		} else {
+			this.inner.domElement.style.display = "block";
+			this.inner.forceContextRestore();
+
+			if (this.staticImage) {
+				this.wrapper.removeChild(this.staticImage);
+			}
+
+			this.staticImage = null;
+		}
 	}
 
 	/** Returns the renderer options with default values applied if configuration options are not provided */
