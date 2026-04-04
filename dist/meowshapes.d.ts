@@ -16315,6 +16315,86 @@ declare class Graph implements RendererObject<GraphColor> {
 	 */
 	dashed(dashSize?: number, gapSize?: number): this;
 }
+export type Graph3dColor = THREE.ColorRepresentation | ((x: number, y: number, z: number) => THREE.ColorRepresentation);
+declare class Graph3d implements RendererObject<Graph3dColor> {
+	/**
+	 * The HeightField object representing the 3D graph surface.
+	 */
+	heightField: HeightField;
+	/**
+	 * The computed (x, y, z) values of the 3D graph.
+	 */
+	values: THREE.Vector3[];
+	constructor(ctx: Ctx, func: (x: number, z: number) => number, size?: Vec2);
+	pos(position: Vec3): this;
+	/**
+	 * Sets the color of the 3D graph's surface.
+	 * @param color A color or a function that returns a color based on x, y, and z values, where y is the calculated graph value at (x, z).
+	 */
+	color(color: Graph3dColor): this;
+	/**
+	 * Sets the material of the 3D graph's surface.
+	 * @param material The material to apply.
+	 */
+	material(material: THREE.Material): this;
+	/**
+	 * Adds a grid of line strips over the 3D graph.
+	 * @param segments Number of segments in the grid along x and z axes.
+	 */
+	grid(segments?: Vec2): this;
+	/**
+	 * Sets the color of all grid lines in the 3D graph, if grid was added.
+	 * @param color A color or from/to gradient for the grid lines.
+	 */
+	gridColor(color: THREE.ColorRepresentation): this;
+	/**
+	 * Sets the line width of all grid lines in the 3D graph, if grid was added.
+	 * @param width The new line width.
+	 */
+	linewidth(width: number): this;
+	/**
+	 * Removes the surface from the 3D graph, leaving only the grid lines if they were added.
+	 */
+	noSurface(): this;
+}
+export type HeightFieldColor = THREE.ColorRepresentation | THREE.ColorRepresentation[];
+declare class HeightField extends BasicObject<THREE.PlaneGeometry> {
+	constructor(ctx: Ctx, size: Vec2, segments: Vec2, heights: Float64Array | number[]);
+	/**
+	 * Sets the color of the height field.
+	 * @param color A single color or an array of colors for each vertex.
+	 */
+	color(color: HeightFieldColor): this;
+	/**
+	 * Gets the number of vertices in the height field.
+	 * @returns Number of vertices.
+	 */
+	get pointCount(): number;
+	/**
+	 * Gets the height of a specific vertex.
+	 * @param index Index of the vertex to get the height for.
+	 * @returns Height of the specified vertex.
+	 */
+	getHeight(index: number): number;
+	/**
+	 * Sets the height of a specific vertex.
+	 * @param index Index of the vertex to set the height for.
+	 * @param height New height for the vertex.
+	 */
+	setHeight(index: number, height: number): void;
+	/**
+	 * Gets the color of a specific vertex.
+	 * @param index Index of the vertex to get the color for.
+	 * @returns Color of the specified vertex.
+	 */
+	getColor(index: number): THREE.Color;
+	/**
+	 * Sets the color of a specific vertex.
+	 * @param index Index of the vertex to set the color for.
+	 * @param color New color for the vertex.
+	 */
+	setColor(index: number, color: THREE.ColorRepresentation): void;
+}
 declare class LineSegmentsGeometry extends InstancedBufferGeometry {
 	/**
 	 * Read-only flag to check if a given object is of type LineSegmentsGeometry.
@@ -16442,106 +16522,6 @@ declare class LineStrip implements RendererObject<LineStripColor> {
 	 * @param gapSize Size of the gaps between dashes.
 	 */
 	dashed(dashSize?: number, gapSize?: number): this;
-}
-export type Graph3dColor = THREE.ColorRepresentation | ((x: number, y: number, z: number) => THREE.ColorRepresentation);
-declare class Graph3d implements RendererObject<Graph3dColor> {
-	/**
-	 * The Group mesh containing the surface and any grid lines.
-	 */
-	mesh: THREE.Group;
-	/**
-	 * The HeightField object representing the 3D graph surface.
-	 */
-	heightField: HeightField;
-	/**
-	 * An array of line strips representing grid lines on the graph, if any were added.
-	 */
-	linestrips: LineStrip[];
-	/**
-	 * The computed (x, y, z) values of the 3D graph.
-	 */
-	values: THREE.Vector3[];
-	/** Reference to the rendering context. */
-	private ctxRef;
-	/** The function used to compute the graph's y values. */
-	private func;
-	/** Number of points along x and z axes. */
-	private graphPointCount;
-	constructor(ctx: Ctx, func: (x: number, z: number) => number, size?: Vec2);
-	pos(position: Vec3): this;
-	/**
-	 * Sets the color of the 3D graph's surface.
-	 * @param color A color or a function that returns a color based on x, y, and z values, where y is the calculated graph value at (x, z).
-	 */
-	color(color: Graph3dColor): this;
-	/**
-	 * Sets the material of the 3D graph's surface.
-	 * @param material The material to apply.
-	 */
-	material(material: THREE.Material): this;
-	/**
-	 * Adds a grid of line strips over the 3D graph.
-	 * @param segments Number of segments in the grid along x and z axes.
-	 */
-	grid(segments?: Vec2): this;
-	/**
-	 * Sets the color of all grid lines in the 3D graph, if grid was added.
-	 * @param color A color or from/to gradient for the grid lines.
-	 */
-	gridColor(color: LineStripColor): this;
-	/**
-	 * Sets the line width of all grid lines in the 3D graph, if grid was added.
-	 * @param width The new line width.
-	 */
-	linewidth(width: number): this;
-	/**
-	 * Sets all grid lines in the 3D graph to be dashed, if grid was added. If no parameters are provided, default values are used.
-	 * @param dashSize Size of the dashes.
-	 * @param gapSize Size of the gaps between dashes.
-	 */
-	dashed(dashSize?: number, gapSize?: number): this;
-	/**
-	 * Removes the surface from the 3D graph, leaving only the grid lines if they were added.
-	 */
-	noSurface(): this;
-}
-export type HeightFieldColor = THREE.ColorRepresentation | THREE.ColorRepresentation[];
-declare class HeightField extends BasicObject<THREE.PlaneGeometry> {
-	constructor(ctx: Ctx, size: Vec2, segments: Vec2, heights: Float64Array | number[]);
-	/**
-	 * Sets the color of the height field.
-	 * @param color A single color or an array of colors for each vertex.
-	 */
-	color(color: HeightFieldColor): this;
-	/**
-	 * Gets the number of vertices in the height field.
-	 * @returns Number of vertices.
-	 */
-	get pointCount(): number;
-	/**
-	 * Gets the height of a specific vertex.
-	 * @param index Index of the vertex to get the height for.
-	 * @returns Height of the specified vertex.
-	 */
-	getHeight(index: number): number;
-	/**
-	 * Sets the height of a specific vertex.
-	 * @param index Index of the vertex to set the height for.
-	 * @param height New height for the vertex.
-	 */
-	setHeight(index: number, height: number): void;
-	/**
-	 * Gets the color of a specific vertex.
-	 * @param index Index of the vertex to get the color for.
-	 * @returns Color of the specified vertex.
-	 */
-	getColor(index: number): THREE.Color;
-	/**
-	 * Sets the color of a specific vertex.
-	 * @param index Index of the vertex to set the color for.
-	 * @param color New color for the vertex.
-	 */
-	setColor(index: number, color: THREE.ColorRepresentation): void;
 }
 declare class Plane$1 extends BasicObject<THREE.PlaneGeometry> {
 	constructor(ctx: Ctx, width: number, height: number);
@@ -16765,9 +16745,10 @@ export declare class Ctx {
 	 */
 	background: (color: THREE.ColorRepresentation) => void;
 	/**
-	 * Gets or sets the zoom level of the camera. The zoom level is the inverse of the camera's scale.
-	 * @param value (Optional) If provided, sets the zoom level to this factor.
-	 * @returns The current zoom level of the camera.
+	 * Gets or sets the zoom level of the camera. Setting a value will update the camera's zoom, while calling it
+	 * without arguments will return the current zoom level.
+	 * @param value (Optional) The new zoom level to set for the camera. If not provided, the method will return the current zoom level.
+	 * @return The current zoom level of the camera.
 	 */
 	zoom: (value?: number) => number;
 	/**
