@@ -169,10 +169,9 @@ export class Ctx {
 	 */
 	zoom = (value?: number) => {
 		if (value !== undefined) {
-			this.camera.scale.setScalar(1 / value);
+			this.camera.zoom = value;
 		}
-		const { x: scaleX, y: scaleY, z: scaleZ } = this.camera.scale;
-		return 1 / Math.min(scaleX, scaleY, scaleZ);
+		return this.camera.zoom;
 	};
 
 	/**
