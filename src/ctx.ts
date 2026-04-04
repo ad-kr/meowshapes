@@ -118,6 +118,7 @@ export class Ctx {
 		this.camera.far = 1000000;
 		this.camera.position.set(-1, 1, 1);
 		this.camera.lookAt(0, 0, 0);
+		this.camera.updateProjectionMatrix();
 
 		this.orbitControls = null;
 	}
