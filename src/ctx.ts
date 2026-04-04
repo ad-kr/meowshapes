@@ -118,6 +118,7 @@ export class Ctx {
 		this.camera.far = 1000000;
 		this.camera.position.set(-1, 1, 1);
 		this.camera.lookAt(0, 0, 0);
+		this.camera.updateProjectionMatrix();
 
 		this.orbitControls = null;
 	}
@@ -163,16 +164,17 @@ export class Ctx {
 	};
 
 	/**
-	 * Gets or sets the zoom level of the camera. The zoom level is the inverse of the camera's scale.
-	 * @param value (Optional) If provided, sets the zoom level to this factor.
-	 * @returns The current zoom level of the camera.
+	 * Gets or sets the zoom level of the camera. Setting a value will update the camera's zoom, while calling it
+	 * without arguments will return the current zoom level.
+	 * @param value (Optional) The new zoom level to set for the camera. If not provided, the method will return the current zoom level.
+	 * @return The current zoom level of the camera.
 	 */
 	zoom = (value?: number) => {
 		if (value !== undefined) {
-			this.camera.scale.setScalar(1 / value);
+			this.camera.zoom = value;
+			this.camera.updateProjectionMatrix();
 		}
-		const { x: scaleX, y: scaleY, z: scaleZ } = this.camera.scale;
-		return 1 / Math.min(scaleX, scaleY, scaleZ);
+		return this.camera.zoom;
 	};
 
 	/**

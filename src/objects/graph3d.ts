@@ -1,7 +1,6 @@
-import { Ctx, THREE, type Vec2, type Vec3 } from "../index.ts";
+import { color, Ctx, THREE, type Vec2, type Vec3 } from "../index.ts";
 import { toVec2, toVec3, vec2 } from "../vecUtils.ts";
-import type { HeightField, LineStrip, RendererObject } from "./index.ts";
-import type { LineStripColor } from "./linestrip.ts";
+import type { HeightField, RendererObject } from "./index.ts";
 
 type Graph3dColor =
 	| THREE.ColorRepresentation
@@ -9,33 +8,14 @@ type Graph3dColor =
 
 export class Graph3d implements RendererObject<Graph3dColor> {
 	/**
-	 * The Group mesh containing the surface and any grid lines.
-	 */
-	mesh: THREE.Group;
-
-	/**
 	 * The HeightField object representing the 3D graph surface.
 	 */
 	heightField: HeightField;
 
 	/**
-	 * An array of line strips representing grid lines on the graph, if any were added.
-	 */
-	linestrips: LineStrip[];
-
-	/**
 	 * The computed (x, y, z) values of the 3D graph.
 	 */
 	values: THREE.Vector3[];
-
-	/** Reference to the rendering context. */
-	private ctxRef: Ctx;
-
-	/** The function used to compute the graph's y values. */
-	private func: (x: number, z: number) => number;
-
-	/** Number of points along x and z axes. */
-	private graphPointCount: THREE.Vector2;
 
 	constructor(ctx: Ctx, func: (x: number, z: number) => number, size?: Vec2) {
 		const defaultSize = 100 / ctx.zoom();
@@ -46,8 +26,6 @@ export class Graph3d implements RendererObject<Graph3dColor> {
 		const zSeg = Math.round(depth * resolution);
 		const xPoints = xSeg + 1;
 		const zPoints = zSeg + 1;
-
-		this.graphPointCount = vec2(xPoints, zPoints);
 
 		this.values = new Array(xPoints * zPoints);
 
@@ -64,23 +42,80 @@ export class Graph3d implements RendererObject<Graph3dColor> {
 
 		const heights = this.values.map((v) => v.y);
 
-		this.heightField = ctx.heightField(
-			[width, depth],
-			[xSeg, zSeg],
-			heights
-		);
+		const graphMaterial = new THREE.ShaderMaterial({
+			vertexColors: true,
+			side: THREE.DoubleSide,
+			uniforms: {
+				segments: { value: vec2(0.0, 0.0) },
+				linewidth: { value: 1.0 },
+				gridcolor: { value: color(0x000000) },
+				nosurface: { value: false },
+				dashsize: { value: 0.0 },
+				gapsize: { value: 0.0 },
+			},
+			vertexShader: /* glsl */ `
+                varying vec3 vColor;
+                varying vec2 vUv;
 
-		this.mesh = new THREE.Group();
-		this.mesh.add(this.heightField.mesh);
-		ctx.spawn(this.mesh);
+                void main() {
+                    vColor = color;
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+			fragmentShader: /* glsl */ `
+                varying vec3 vColor;
+                varying vec2 vUv;
 
-		this.linestrips = [];
-		this.func = func;
-		this.ctxRef = ctx;
+                uniform vec2 segments;
+                uniform float linewidth;
+                uniform vec3 gridcolor;
+                uniform bool nosurface;
+                uniform float dashsize;
+                uniform float gapsize;
+
+                void main() {
+                    float alpha = nosurface ? 0.0 : 1.0;
+                    
+                    if (segments.x <= 0.0 && segments.y <= 0.0) {
+                        gl_FragColor = vec4(vColor, alpha);
+                        gl_FragColor = linearToOutputTexel( gl_FragColor );
+                        return;
+                    }
+                    
+                    vec2 gridUv = vUv * segments;
+                    vec2 gridFw = max(fwidth(gridUv), 0.001);
+                    vec2 grid = abs(fract(gridUv - 0.5) - 0.5) / gridFw;
+                    float gridFragment = min(grid.x, grid.y);
+                    float gridFactor = smoothstep(linewidth - 1.0, linewidth, gridFragment);
+
+                    vec2 edgeFw = max(fwidth(vUv), 0.001);
+                    vec2 edge = abs(fract(vUv - 0.5) - 0.5) / edgeFw;
+                    float edgeFragment = min(edge.x, edge.y);
+                    float edgeFactor = smoothstep(linewidth * 2.0 - 1.0, linewidth * 2.0, edgeFragment);
+
+                    float factor = min(edgeFactor, gridFactor);
+
+                    if (dashsize > 0.0 || gapsize > 0.0) {
+                        float totalSize = dashsize + gapsize;
+                        float dashFactor = mod(gl_FragCoord.x + gl_FragCoord.y, totalSize) < dashsize ? 1.0 : 0.0;
+                        factor *= dashFactor;
+                    }
+
+                    vec4 color = mix(vec4(gridcolor, 1.0), nosurface ? vec4(0.0) : vec4(vColor.rgb, 1.0), factor);
+                    
+                    gl_FragColor = linearToOutputTexel( color );
+                }
+             `,
+		});
+
+		this.heightField = ctx
+			.heightField([width, depth], [xSeg, zSeg], heights)
+			.material(graphMaterial);
 	}
 
 	pos(position: Vec3): this {
-		this.mesh.position.copy(toVec3(position));
+		this.heightField.mesh.position.copy(toVec3(position));
 		return this;
 	}
 
@@ -113,52 +148,15 @@ export class Graph3d implements RendererObject<Graph3dColor> {
 	 * @param segments Number of segments in the grid along x and z axes.
 	 */
 	grid(segments?: Vec2): this {
-		if (this.linestrips.length !== 0) return this;
-
-		const defaultSegments = 10;
-		const { x: xSeg, y: zSeg } = toVec2(segments ?? defaultSegments);
-		const xPoints = xSeg + 1;
-		const zPoints = zSeg + 1;
-
-		const xGraphPoints = this.graphPointCount.x;
-		const zGraphPoints = this.graphPointCount.y;
-		const xGraphSeg = xGraphPoints - 1;
-		const zGraphSeg = zGraphPoints - 1;
-
-		const { width, height: depth } =
-			this.heightField.mesh.geometry.parameters;
-
-		const yOffset = 1 / this.ctxRef.zoom();
-
-		for (let i = 0; i < xPoints; i++) {
-			const x = -width * 0.5 + (i / xSeg) * width;
-
-			const points: Vec3[] = [];
-			for (let j = 0; j < zGraphPoints; j++) {
-				const z = -depth * 0.5 + (j / zGraphSeg) * depth;
-				const y = this.func(x, z) + yOffset;
-				points.push([x, y, z]);
-			}
-			const line = this.ctxRef.lineStrip(points);
-			this.mesh.add(line.mesh);
-
-			this.linestrips.push(line);
+		if (
+			this.heightField.mesh.material instanceof THREE.ShaderMaterial &&
+			"segments" in this.heightField.mesh.material.uniforms
+		) {
+			const gridSegments =
+				segments !== undefined ? toVec2(segments) : vec2(10, 10);
+			this.heightField.mesh.material.uniforms.segments.value =
+				gridSegments;
 		}
-
-		for (let i = 0; i < zPoints; i++) {
-			const z = -depth * 0.5 + (i / zSeg) * depth;
-			const points: Vec3[] = [];
-			for (let j = 0; j < xGraphPoints; j++) {
-				const x = -width * 0.5 + (j / xGraphSeg) * width;
-				const y = this.func(x, z) + yOffset;
-				points.push([x, y, z]);
-			}
-			const line = this.ctxRef.lineStrip(points);
-			this.mesh.add(line.mesh);
-
-			this.linestrips.push(line);
-		}
-
 		return this;
 	}
 
@@ -166,10 +164,14 @@ export class Graph3d implements RendererObject<Graph3dColor> {
 	 * Sets the color of all grid lines in the 3D graph, if grid was added.
 	 * @param color A color or from/to gradient for the grid lines.
 	 */
-	gridColor(color: LineStripColor): this {
-		this.linestrips.forEach((line) => {
-			line.color(color);
-		});
+	gridColor(color: THREE.ColorRepresentation): this {
+		if (
+			this.heightField.mesh.material instanceof THREE.ShaderMaterial &&
+			"gridcolor" in this.heightField.mesh.material.uniforms
+		) {
+			this.heightField.mesh.material.uniforms.gridcolor.value =
+				new THREE.Color(color);
+		}
 		return this;
 	}
 
@@ -178,21 +180,12 @@ export class Graph3d implements RendererObject<Graph3dColor> {
 	 * @param width The new line width.
 	 */
 	linewidth(width: number): this {
-		this.linestrips.forEach((line) => {
-			line.linewidth(width);
-		});
-		return this;
-	}
-
-	/**
-	 * Sets all grid lines in the 3D graph to be dashed, if grid was added. If no parameters are provided, default values are used.
-	 * @param dashSize Size of the dashes.
-	 * @param gapSize Size of the gaps between dashes.
-	 */
-	dashed(dashSize?: number, gapSize?: number): this {
-		this.linestrips.forEach((line) => {
-			line.dashed(dashSize, gapSize);
-		});
+		if (
+			this.heightField.mesh.material instanceof THREE.ShaderMaterial &&
+			"linewidth" in this.heightField.mesh.material.uniforms
+		) {
+			this.heightField.mesh.material.uniforms.linewidth.value = width;
+		}
 		return this;
 	}
 
@@ -200,7 +193,14 @@ export class Graph3d implements RendererObject<Graph3dColor> {
 	 * Removes the surface from the 3D graph, leaving only the grid lines if they were added.
 	 */
 	noSurface(): this {
-		this.mesh.remove(this.heightField.mesh);
+		if (
+			this.heightField.mesh.material instanceof THREE.ShaderMaterial &&
+			"nosurface" in this.heightField.mesh.material.uniforms
+		) {
+			this.heightField.mesh.material.transparent = true;
+			this.heightField.mesh.material.depthWrite = false;
+			this.heightField.mesh.material.uniforms.nosurface.value = true;
+		}
 		return this;
 	}
 }
